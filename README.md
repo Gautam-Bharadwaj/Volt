@@ -41,7 +41,7 @@ Required dependencies:
 
 ---
 
-## AI Recommendation Logic
+## Recommendation Logic
 The backend includes a specialized endpoint `/api/ai-recommendation` that analyzes player styles. For example:
 - **Shooters** are recommended high-stability, low-profile shoes for perimeter movement.
 - **Dunkers** are recommended high-impact protection shoes for vertical explosiveness.

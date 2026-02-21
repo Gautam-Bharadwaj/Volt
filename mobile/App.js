@@ -118,3 +118,43 @@ function MainApp() {
                     {sports.map((sport, i) => (
                         <TouchableOpacity key={i} style={styles.catItem} onPress={() => setSelectedSport(sport.name)}>
                             <View style={[styles.catIconContainer, selectedSport === sport.name && styles.catIconActive]}>
+                                <Text style={styles.catIcon}>{sport.icon}</Text>
+                            </View>
+                            <Text style={[styles.catLabel, selectedSport === sport.name && styles.catLabelActive]}>{sport.name.toUpperCase()}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            <Text style={styles.sectionTitle}>CURATED FOR YOU</Text>
+            {beginnerGear.map((item, idx) => (
+                <Animated.View key={item.id} entering={FadeInUp.delay(idx * 200)} style={styles.bigCardB}>
+                    <TouchableOpacity activeOpacity={0.95}>
+                        <View style={styles.imageWrapperB}>
+                            <Image source={{ uri: item.image }} style={styles.fullImageB} />
+                            <TouchableOpacity style={styles.saveBtnB}>
+                                <Bookmark size={22} color="#111" />
+                            </TouchableOpacity>
+                            <View style={styles.brandBadge}>
+                                <Text style={styles.brandText}>{item.brand}</Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                    <View style={styles.cardInfoB}>
+                        <View style={styles.cardTextRow}>
+                            <Text style={styles.pNameB}>{item.name}</Text>
+                            <Text style={styles.pPriceB}>{item.price}</Text>
+                        </View>
+                        <TouchableOpacity style={styles.quickAdd}>
+                            <ShoppingBag size={18} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+            ))}
+        </Animated.View>
+    );
+
+    const AdvancedUI = () => (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
+            <View style={styles.stepHeader}>
+                <Text style={styles.stepNumber}>01</Text>

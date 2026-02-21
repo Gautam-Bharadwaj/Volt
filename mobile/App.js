@@ -278,3 +278,43 @@ function MainApp() {
                         >
                             <Text style={[styles.modeTabText, activeMode === 'Advanced' && styles.modeTabTextActive]}>PRO FLOW</Text>
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </SafeAreaView>
+
+            <ScrollView
+                style={styles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 120 }}
+            >
+                {activeMode === 'Beginner' ? <BeginnerUI /> : <AdvancedUI />}
+            </ScrollView>
+
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)', 'black']} style={styles.bottomNavContainer}>
+                <View style={styles.bottomNav}>
+                    <NavTab icon={<ShoppingBag size={24} />} label="SHOP" active={activeTab === 'Shop'} onPress={() => setActiveTab('Shop')} />
+                    <NavTab icon={<Activity size={24} />} label="PERFORM" active={activeTab === 'Stats'} onPress={() => setActiveTab('Stats')} />
+                    <NavTab icon={<Trophy size={24} />} label="ARENA" active={activeTab === 'Arena'} onPress={() => setActiveTab('Arena')} />
+                    <NavTab icon={<User size={24} />} label="PROFILE" active={activeTab === 'Pro'} onPress={() => setActiveTab('Pro')} />
+                </View>
+            </LinearGradient>
+        </View>
+    );
+}
+
+const NavTab = ({ icon, label, active, onPress }) => (
+    <TouchableOpacity style={styles.navTab} onPress={onPress}>
+        {React.cloneElement(icon, { color: active ? '#FF4500' : '#888', strokeWidth: active ? 2.5 : 2 })}
+        <Text style={[styles.navText, { color: active ? 'white' : '#888' }]}>{label}</Text>
+    </TouchableOpacity>
+);
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: 'black' },
+    headerArea: { backgroundColor: 'black', paddingBottom: 5 },
+    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4 },
+    logoGroup: { height: 90, width: 240, justifyContent: 'center', marginLeft: -35 },
+    logoImage: { width: '100%', height: '100%' },
+    topIcons: { flexDirection: 'row' },
+    topIconBtn: { marginLeft: 15 },
+

@@ -53,3 +53,51 @@ const BodyMap = ({ theme, activePart, onPartPress }) => {
                     key={node.id}
                     position={node.position}
                     label={node.label}
+                    isActive={activePart === node.id}
+                    onPress={() => onPartPress(node.id)}
+                    theme={theme}
+                />
+            ))}
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    athleteImage: {
+        width: '80%',
+        height: '80%',
+        opacity: 0.3,
+    },
+    nodeContainer: {
+        position: 'absolute',
+        alignItems: 'center',
+    },
+    node: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        elevation: 20,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 10,
+    },
+    labelContainer: {
+        position: 'absolute',
+        top: -25,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+    },
+    label: {
+        fontSize: 10,
+        fontWeight: '900',
+    }
+});
+
+export default BodyMap;

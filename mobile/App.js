@@ -158,3 +158,43 @@ function MainApp() {
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
             <View style={styles.stepHeader}>
                 <Text style={styles.stepNumber}>01</Text>
+                <Text style={styles.stepLabel}>SELECT DISCIPLINE</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
+                {sports.map((sport, i) => (
+                    <TouchableOpacity
+                        key={i}
+                        style={[styles.sportCard, selectedSport === sport.name && styles.sportCardActive]}
+                        onPress={() => {
+                            setSelectedSport(sport.name);
+                            const firstPos = sportPositions[sport.name]?.[0]?.name;
+                            if (firstPos) setSelectedPosition(firstPos);
+                        }}
+                    >
+                        <Text style={styles.sportIconP}>{sport.icon}</Text>
+                        <Text style={[styles.sportNameP, selectedSport === sport.name && styles.sportNamePActive]}>{sport.name.toUpperCase()}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            <View style={styles.stepHeader}>
+                <Text style={styles.stepNumber}>02</Text>
+                <Text style={styles.stepLabel}>POSITION ANALYSIS</Text>
+            </View>
+            <View style={styles.groundContainer}>
+                <View style={[styles.pitch, { backgroundColor: sports.find(s => s.name === selectedSport)?.color || '#1a1a1a' }]}>
+                    <View style={styles.pitchLines} />
+                    <View style={styles.pitchCircle} />
+                    {(sportPositions[selectedSport] || []).map((pos) => (
+                        <TouchableOpacity
+                            key={pos.id}
+                            onPress={() => setSelectedPosition(pos.name)}
+                            style={[styles.posNode, { top: pos.top, left: pos.left }]}
+                        >
+                            <View style={[styles.nodePoint, selectedPosition === pos.name && styles.nodePointActive]} />
+                            <Text style={[styles.nodeLabel, selectedPosition === pos.name && styles.nodeLabelActive]}>{pos.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+                <LinearGradient colors={['rgba(255,69,0,0.1)', 'transparent']} style={styles.posInfoOverlay}>
+                    <MapPin size={14} color="#FF4500" />

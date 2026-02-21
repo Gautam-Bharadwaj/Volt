@@ -94,7 +94,7 @@ function MainApp() {
                 <Animated.View key={item.id} entering={FadeInUp.delay(idx * 200)} style={styles.bigCardB}>
                     <TouchableOpacity activeOpacity={0.95}>
                         <View style={styles.imageWrapperB}>
-                            <Image source={{ uri: item.image }} style={styles.fullImageB} />
+                            <Image source={{ uri: item.image }} style={styles.fullImageB} resizeMethod="scale" />
                             <TouchableOpacity style={styles.saveBtnB}>
                                 <Bookmark size={22} color="#111" />
                             </TouchableOpacity>

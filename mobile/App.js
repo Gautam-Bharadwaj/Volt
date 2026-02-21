@@ -198,3 +198,43 @@ function MainApp() {
                 </View>
                 <LinearGradient colors={['rgba(255,69,0,0.1)', 'transparent']} style={styles.posInfoOverlay}>
                     <MapPin size={14} color="#FF4500" />
+                    <Text style={styles.posInfoDesc}>CURRENT FOCUS: <Text style={styles.posBright}>{selectedPosition.toUpperCase()}</Text></Text>
+                </LinearGradient>
+            </View>
+
+            <View style={styles.stepHeader}>
+                <Text style={styles.stepNumber}>03</Text>
+                <Text style={styles.stepLabel}>PRO RECOMMENDATIONS</Text>
+            </View>
+            <View style={styles.gearGrid}>
+                {(positionGear[selectedPosition] || positionGear['Striker']).map((item, idx) => (
+                    <Animated.View key={item.id} entering={SlideInRight.delay(idx * 150)} style={styles.productCard}>
+                        <View style={styles.imgWrapper}>
+                            <Image source={{ uri: item.image }} style={styles.productImg} />
+                            <View style={styles.tagBadge}>
+                                <Text style={styles.tagText}>{item.tag.toUpperCase()}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.proInfo}>
+                            <Text style={styles.productNameP}>{item.name}</Text>
+                            <Text style={styles.productPriceP}>{item.price}</Text>
+                        </View>
+                    </Animated.View>
+                ))}
+            </View>
+        </Animated.View>
+    );
+
+    return (
+        <View style={styles.container}>
+            <StatusBar style="light" />
+            <SafeAreaView style={styles.headerArea}>
+                <View style={styles.topBar}>
+                    <View style={styles.logoGroup}>
+                        <Image
+                            source={require('./assets/vlogo.png')}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                        />
+                    </View>
+                    <View style={styles.topIcons}>

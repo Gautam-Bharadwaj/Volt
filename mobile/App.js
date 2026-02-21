@@ -238,3 +238,43 @@ function MainApp() {
                         />
                     </View>
                     <View style={styles.topIcons}>
+                        <TouchableOpacity style={styles.topIconBtn}>
+                            <Bell size={24} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.topIconBtn}>
+                            <User size={24} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* --- Search Bar --- */}
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchBar}>
+                        <Search size={20} color="#666" style={styles.searchIcon} />
+                        <RNTextInput
+                            placeholder="Search gear, pro athletes..."
+                            placeholderTextColor="#666"
+                            style={styles.searchInput}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                        <TouchableOpacity style={styles.filterBtn}>
+                            <Grid size={18} color="#FF4500" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <View style={styles.modeContainer}>
+                    <View style={styles.modeTrack}>
+                        <TouchableOpacity
+                            onPress={() => setActiveMode('Beginner')}
+                            style={[styles.modeTab, activeMode === 'Beginner' && styles.modeTabActive]}
+                        >
+                            <Text style={[styles.modeTabText, activeMode === 'Beginner' && styles.modeTabTextActive]}>EXPLORE</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setActiveMode('Advanced')}
+                            style={[styles.modeTab, activeMode === 'Advanced' && styles.modeTabActivePro]}
+                        >
+                            <Text style={[styles.modeTabText, activeMode === 'Advanced' && styles.modeTabTextActive]}>PRO FLOW</Text>
+                        </TouchableOpacity>

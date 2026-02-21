@@ -318,3 +318,43 @@ const styles = StyleSheet.create({
     topIcons: { flexDirection: 'row' },
     topIconBtn: { marginLeft: 15 },
 
+    searchContainer: { paddingHorizontal: 24, marginTop: 0 },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', borderRadius: 20, paddingHorizontal: 15, height: 55, borderWidth: 1, borderColor: '#222' },
+    searchIcon: { marginRight: 12 },
+    searchInput: { flex: 1, color: 'white', fontSize: 14, fontWeight: '600' },
+    filterBtn: { backgroundColor: '#1a1a1a', padding: 10, borderRadius: 12 },
+
+    modeContainer: { alignItems: 'center', marginTop: 12 },
+    modeTrack: { flexDirection: 'row', backgroundColor: '#111', borderRadius: 30, padding: 4, width: '85%' },
+    modeTab: { flex: 1, paddingVertical: 12, borderRadius: 26, alignItems: 'center' },
+    modeTabActive: { backgroundColor: '#222' },
+    modeTabActivePro: { backgroundColor: '#FF4500' },
+    modeTabText: { color: '#666', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+    modeTabTextActive: { color: 'white' },
+
+    scrollContainer: { flex: 1, backgroundColor: '#0a0a0a', borderTopLeftRadius: 40, borderTopRightRadius: 40, marginTop: 4 },
+    mainContent: { padding: 24, paddingTop: 10 },
+
+    heroBanner: { marginBottom: 20, height: 180, borderRadius: 30, overflow: 'hidden' },
+    heroGradient: { flex: 1, padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    heroTag: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+    heroTitle: { color: 'white', fontSize: 24, fontWeight: '900', marginTop: 8, width: '80%', lineHeight: 28 },
+    heroBtn: { backgroundColor: 'white', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 15, alignSelf: 'flex-start' },
+    heroBtnText: { color: 'black', fontSize: 11, fontWeight: '900' },
+    heroZap: { position: 'absolute', right: -10, top: 20 },
+
+    categoryHeadingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 35 },
+    catSubTitle: { color: '#FF4500', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+    catTitle: { color: 'white', fontSize: 20, fontWeight: '900' },
+    categoryScroll: { flex: 1, marginLeft: 20 },
+    catItem: { alignItems: 'center', marginRight: 24 },
+    catIconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#151515', justifyContent: 'center', alignItems: 'center' },
+    catIconActive: { backgroundColor: '#FF450033', borderColor: '#FF4500', borderWidth: 1.5 },
+    catIcon: { fontSize: 22 },
+    catLabel: { color: '#666', fontSize: 9, fontWeight: '900', marginTop: 8, letterSpacing: 0.5 },
+    catLabelActive: { color: 'white' },
+
+    sectionTitle: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 2, marginBottom: 20, opacity: 0.6 },
+
+    bigCardB: { backgroundColor: '#111', borderRadius: 35, overflow: 'hidden', marginBottom: 24, borderWidth: 1, borderColor: '#1a1a1a' },
+    imageWrapperB: { aspectRatio: 1.2, backgroundColor: '#0a0a0a', justifyContent: 'center', alignItems: 'center', position: 'relative' },

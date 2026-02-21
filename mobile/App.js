@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     topIconBtn: { marginLeft: 15 },
 
     searchContainer: { paddingHorizontal: 24, marginTop: 0 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', borderRadius: 20, paddingHorizontal: 15, height: 55, borderWidth: 1, borderColor: '#222' },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', borderRadius: 24, paddingHorizontal: 15, height: 55, borderWidth: 1, borderColor: '#222' },
     searchIcon: { marginRight: 12 },
     searchInput: { flex: 1, color: 'white', fontSize: 14, fontWeight: '600' },
     filterBtn: { backgroundColor: '#1a1a1a', padding: 10, borderRadius: 12 },

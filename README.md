@@ -1,8 +1,8 @@
-# Volt: The Sport Universe ⚡
+# Volt: The Sport Universe 
 
 Volt is a next-generation, sport-centric gear discovery platform. Unlike generic marketplaces, it creates an immersive experience dedicated to the athlete's specific game.
 
-## 🚀 Key Features
+##  Key Features
 1. **Dynamic Theme Engine**: The entire app (UI, sounds, vibration) transforms based on the selected sport.
 2. **Body-Map Discovery**: Navigate gear using a 3D Athlete model. Click body parts to see relevant equipment.
 3. **AI Recommendation**: Predicts the best gear based on player profile (e.g., Shooter vs Dunker).
@@ -10,12 +10,12 @@ Volt is a next-generation, sport-centric gear discovery platform. Unlike generic
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 - **/frontend**: High-fidelity React (Vite) web prototype.
 - **/mobile**: React Native (Expo) source code for Android/iOS.
 - **/backend**: FastAPI (Python) server logic.
 
-## 🛠️ Getting Started
+##  Getting Started
 
 ### 1. Backend (FastAPI)
 ```bash

@@ -47,6 +47,10 @@ export default function App() {
     );
 }
 
+/**
+ * Main application component handling the state and navigation flow.
+ * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
+ */
 function MainApp() {
     const [activeTab, setActiveTab] = useState('Shop');
     const [activeMode, setActiveMode] = useState('Beginner');

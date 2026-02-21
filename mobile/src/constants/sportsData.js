@@ -31,3 +31,16 @@ export const sportPositions = {
         { id: 'wk', label: 'WK', top: '30%', left: '46%', name: 'Wicket Keeper' },
     ],
 };
+
+export const positionGear = {
+    'Striker': [
+        { id: 'pg1', name: 'Mercurial Air Zoom', price: '₹24,495', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400', tag: 'Elite Speed' },
+        { id: 'pg2', name: 'Flight Match Ball', price: '₹3,999', image: 'https://images.unsplash.com/photo-1552318975-2758c97ec767?q=80&w=400', tag: 'Certified' },
+    ],
+    'Midfielder': [
+        { id: 'pg3', name: 'Phantom Luna II', price: '₹22,995', image: 'https://images.unsplash.com/photo-1511886929837-399a8a111ada?q=80&w=400', tag: '360 Traction' },
+    ],
+    'Goalkeeper': [
+        { id: 'pg4', name: 'Vapor Grip 3 Pro', price: '₹8,999', image: 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?q=80&w=400', tag: 'Hybrid Cut' },
+    ],
+};

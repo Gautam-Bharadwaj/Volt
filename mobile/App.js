@@ -37,6 +37,7 @@ import Animated, {
     SlideInRight
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Video, ResizeMode } from 'expo-av';
 import {
     sports,
     sportProducts,
@@ -127,14 +128,12 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
 
     const currentStats = getPositionStats(selectedPosition);
 
+    const infiniteSports = Array(20).fill(sports).flat();
+
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-            <View style={styles.stepHeader}>
-                <Text style={styles.stepNumber}>01</Text>
-                <Text style={styles.stepLabel}>SELECT DISCIPLINE</Text>
-            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sportsScroll}>
-                {sports.map((sport, i) => (
+                {infiniteSports.map((sport, i) => (
                     <TouchableOpacity
                         key={i}
                         style={[styles.sportCard, selectedSport === sport.name && styles.sportCardActive]}
@@ -503,12 +502,38 @@ const ProfileUI = () => (
 );
 
 function MainApp() {
+    const [showIntro, setShowIntro] = useState(true);
     const [activeTab, setActiveTab] = useState('Shop');
     const [activeMode, setActiveMode] = useState('Beginner');
     const [selectedSport, setSelectedSport] = useState('Football');
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [fadeAnim] = useState(new Animated.Value(1));
+
+    if (showIntro) {
+        return (
+            <Animated.View style={{ flex: 1, backgroundColor: 'black', opacity: fadeAnim }}>
+                <StatusBar style="light" hidden />
+                <Video
+                    source={require('./assets/intro.mp4')}
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay
+                    isLooping={false}
+                    onPlaybackStatusUpdate={(status) => {
+                        if (status.didJustFinish) {
+                            Animated.timing(fadeAnim, {
+                                toValue: 0,
+                                duration: 800,
+                                useNativeDriver: true,
+                            }).start(() => setShowIntro(false));
+                        }
+                    }}
+                />
+            </Animated.View>
+        );
+    }
 
     return (
         <View style={styles.container}>

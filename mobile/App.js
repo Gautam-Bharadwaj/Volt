@@ -503,7 +503,7 @@ const ProfileUI = () => (
 );
 
 function MainApp() {
-    const [activeTab, setActiveTab] = useState('Home');
+    const [activeTab, setActiveTab] = useState('Shop');
     const [activeMode, setActiveMode] = useState('Beginner');
     const [selectedSport, setSelectedSport] = useState('Football');
     const [selectedPosition, setSelectedPosition] = useState('Striker');

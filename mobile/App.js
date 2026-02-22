@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     TextInput as RNTextInput,
     View,
@@ -8,7 +8,8 @@ import {
     TouchableOpacity,
     Image,
     Alert,
-    Dimensions
+    Dimensions,
+    Animated as RNAnimated
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -37,7 +38,7 @@ import Animated, {
     SlideInRight
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Video, ResizeMode } from 'expo-av';
+
 import {
     sports,
     sportProducts,
@@ -59,56 +60,121 @@ export default function App() {
  * Main application component handling the state and navigation flow.
  * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
  */
-const BeginnerUI = ({ selectedSport, setSelectedSport }) => (
-    <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-        <View style={styles.heroBanner}>
-            <LinearGradient colors={['#FF4B2B', '#FF416C']} style={styles.heroGradient}>
-                <View>
-                    <Text style={styles.heroTag}>SEASON 2026</Text>
-                    <Text style={styles.heroTitle}>ELITE PERFORMANCE</Text>
-                    <TouchableOpacity style={styles.heroBtn}>
-                        <Text style={styles.heroBtnText}>SHOP NOW</Text>
-                    </TouchableOpacity>
+const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
+    const banners = [
+        {
+            tag: 'SEASON 2026',
+            title: 'ELITE PERFORMANCE',
+            btn: 'SHOP NOW',
+            colors: ['#FF4B2B', '#FF416C']
+        },
+        {
+            tag: 'LIMITED TIME',
+            title: 'SUMMER SALES 50% OFF',
+            btn: 'CLAIM OFFER',
+            colors: ['#FF8C00', '#FF4500']
+        },
+        {
+            tag: 'MEMBERS ONLY',
+            title: 'USE CODE: VOLTPRO26',
+            btn: 'APPLY COUPON',
+            colors: ['#4169E1', '#0000CD']
+        }
+    ];
+    const scrollRef = useRef(null);
+    const [currentBanner, setCurrentBanner] = useState(0);
+    const bannerWidth = width - 48; // Full width minus mainContent padding
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentBanner((prev) => {
+                const next = (prev + 1) % banners.length;
+                scrollRef.current?.scrollTo({ x: next * bannerWidth, animated: true });
+                return next;
+            });
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [bannerWidth, banners.length]);
+
+    const handleScroll = (event) => {
+        const x = event.nativeEvent.contentOffset.x;
+        const index = Math.round(x / bannerWidth);
+        if (index !== currentBanner) {
+            setCurrentBanner(index);
+        }
+    };
+
+    return (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
+            <View style={styles.heroBannerContainer}>
+                <ScrollView
+                    ref={scrollRef}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                    style={styles.heroBanner}
+                >
+                    {banners.map((banner, index) => (
+                        <View key={index} style={{ width: bannerWidth, height: 180 }}>
+                            <LinearGradient colors={banner.colors} style={styles.heroGradient}>
+                                <View>
+                                    <Text style={styles.heroTag}>{banner.tag}</Text>
+                                    <Text style={styles.heroTitle}>{banner.title}</Text>
+                                    <TouchableOpacity style={styles.heroBtn}>
+                                        <Text style={styles.heroBtnText}>{banner.btn}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </LinearGradient>
+                        </View>
+                    ))}
+                </ScrollView>
+                <View style={styles.dotsContainer}>
+                    {banners.map((_, idx) => (
+                        <View key={idx} style={[styles.dot, currentBanner === idx && styles.activeDot]} />
+                    ))}
                 </View>
-            </LinearGradient>
-        </View>
-
-        <View style={styles.categoryHeadingRow}>
-            <View>
-                <Text style={styles.catSubTitle}>CHOOSE</Text>
-                <Text style={styles.catTitle}>SPORT</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                {sports.map((sport, i) => (
-                    <TouchableOpacity key={i} style={styles.catItem} onPress={() => setSelectedSport(sport.name)}>
-                        <View style={[styles.catIconContainer, selectedSport === sport.name && styles.catIconActive]}>
-                            <Text style={styles.catIcon}>{sport.icon}</Text>
-                        </View>
-                        <Text style={[styles.catLabel, selectedSport === sport.name && styles.catLabelActive]}>{sport.name.toUpperCase()}</Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-        </View>
 
-        <Text style={styles.sectionTitle}>CURATED FOR {selectedSport.toUpperCase()}</Text>
-        <View style={styles.gridContainerB}>
-            {(sportProducts[selectedSport] || []).map((item, idx) => (
-                <Animated.View key={item.id} entering={FadeInUp.delay(idx * 50)} style={styles.miniCardB}>
-                    <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB}>
-                        <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
-                        <View style={styles.miniBrandBadge}>
-                            <Text style={styles.miniBrandText}>{item.brand}</Text>
+            <View style={styles.categoryHeadingRow}>
+                <View>
+                    <Text style={styles.catSubTitle}>CHOOSE</Text>
+                    <Text style={styles.catSubTitle}>YOUR</Text>
+                    <Text style={styles.catTitle}>SPORT</Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                    {sports.map((sport, i) => (
+                        <TouchableOpacity key={i} style={styles.catItem} onPress={() => setSelectedSport(sport.name)}>
+                            <View style={[styles.catIconContainer, selectedSport === sport.name && styles.catIconActive]}>
+                                <Text style={styles.catIcon}>{sport.icon}</Text>
+                            </View>
+                            <Text style={[styles.catLabel, selectedSport === sport.name && styles.catLabelActive]}>{sport.name.toUpperCase()}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
+            <Text style={styles.sectionTitle}>CURATED FOR {selectedSport.toUpperCase()}</Text>
+            <View style={styles.gridContainerB}>
+                {(sportProducts[selectedSport] || []).map((item, idx) => (
+                    <Animated.View key={item.id} entering={FadeInUp.delay(idx * 50)} style={styles.miniCardB}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB}>
+                            <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
+                            <View style={styles.miniBrandBadge}>
+                                <Text style={styles.miniBrandText}>{item.brand}</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <View style={styles.miniInfoB}>
+                            <Text numberOfLines={1} style={styles.miniNameB}>{item.name}</Text>
+                            <Text style={styles.miniPriceB}>{item.price}</Text>
                         </View>
-                    </TouchableOpacity>
-                    <View style={styles.miniInfoB}>
-                        <Text numberOfLines={1} style={styles.miniNameB}>{item.name}</Text>
-                        <Text style={styles.miniPriceB}>{item.price}</Text>
-                    </View>
-                </Animated.View>
-            ))}
-        </View>
-    </Animated.View>
-);
+                    </Animated.View>
+                ))}
+            </View>
+        </Animated.View>
+    );
+};
 
 const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSelectedPosition }) => {
     const getPositionStats = (pos) => {
@@ -502,38 +568,16 @@ const ProfileUI = () => (
 );
 
 function MainApp() {
-    const [showIntro, setShowIntro] = useState(true);
+
     const [activeTab, setActiveTab] = useState('Shop');
     const [activeMode, setActiveMode] = useState('Beginner');
     const [selectedSport, setSelectedSport] = useState('Football');
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const [fadeAnim] = useState(new Animated.Value(1));
 
-    if (showIntro) {
-        return (
-            <Animated.View style={{ flex: 1, backgroundColor: 'black', opacity: fadeAnim }}>
-                <StatusBar style="light" hidden />
-                <Video
-                    source={require('./assets/intro.mp4')}
-                    style={StyleSheet.absoluteFillObject}
-                    resizeMode={ResizeMode.COVER}
-                    shouldPlay
-                    isLooping={false}
-                    onPlaybackStatusUpdate={(status) => {
-                        if (status.didJustFinish) {
-                            Animated.timing(fadeAnim, {
-                                toValue: 0,
-                                duration: 800,
-                                useNativeDriver: true,
-                            }).start(() => setShowIntro(false));
-                        }
-                    }}
-                />
-            </Animated.View>
-        );
-    }
+
+
 
     return (
         <View style={styles.container}>
@@ -636,6 +680,7 @@ const NavTab = ({ icon, label, active, onPress }) => (
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: 'black' },
+
     headerArea: { backgroundColor: 'black', paddingBottom: 5 },
     topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4 },
     logoGroup: { height: 90, width: 240, justifyContent: 'center', marginLeft: -35 },
@@ -660,7 +705,11 @@ const styles = StyleSheet.create({
     scrollContainer: { flex: 1, backgroundColor: '#0a0a0a', borderTopLeftRadius: 40, borderTopRightRadius: 40, marginTop: 4 },
     mainContent: { padding: 24, paddingTop: 10 },
 
-    heroBanner: { marginBottom: 20, height: 180, borderRadius: 30, overflow: 'hidden' },
+    heroBannerContainer: { marginBottom: 20 },
+    heroBanner: { height: 180, borderRadius: 30, overflow: 'hidden', marginBottom: 12 },
+    dotsContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 5 },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)', marginHorizontal: 4 },
+    activeDot: { width: 16, backgroundColor: 'white' },
     heroGradient: { flex: 1, padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     heroTag: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
     heroTitle: { color: 'white', fontSize: 24, fontWeight: '900', marginTop: 8, width: '80%', lineHeight: 28 },
@@ -709,7 +758,6 @@ const styles = StyleSheet.create({
     nodePoint: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(255,255,255,0.2)' },
     nodePointActive: { backgroundColor: '#FF4500', transform: [{ scale: 1.5 }], shadowColor: '#FF4500', shadowRadius: 10, shadowOpacity: 0.8 },
     nodeLabel: { color: '#444', fontSize: 10, fontWeight: '900', marginTop: 6 },
-    nodeLabelActive: { color: 'white' },
     nodeLabelActive: { color: 'white' },
 
     posDashboard: { marginTop: 20, backgroundColor: '#111', borderRadius: 30, padding: 24, borderWidth: 1, borderColor: '#1a1a1a' },

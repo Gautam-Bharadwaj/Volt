@@ -517,7 +517,7 @@ function MainApp() {
                 <View style={styles.topBar}>
                     <View style={styles.logoGroup}>
                         <Image
-                            source={require('./assets/vlogo.png')}
+                            source={require('./assets/vlogo.webp')}
                             style={styles.logoImage}
                             resizeMode="contain"
                         />

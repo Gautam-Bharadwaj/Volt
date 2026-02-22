@@ -5,7 +5,7 @@ Volt is a next-generation, sport-centric gear discovery platform. Unlike generic
 ##  Key Features
 1. **Dynamic Theme Engine**: The entire app (UI, sounds, vibration) transforms based on the selected sport.
 2. **Body-Map Discovery**: Navigate gear using a 3D Athlete model. Click body parts to see relevant equipment.
-3. **AI Recommendation**: Predicts the best gear based on player profile (e.g., Shooter vs Dunker).
+3. **Recommendation**: Predicts the best gear based on player profile (e.g., Shooter vs Dunker).
 4. **FastAPI Backend**: Real-time gear management and AI-guided suggestions.
 
 ---

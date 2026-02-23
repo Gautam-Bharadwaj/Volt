@@ -844,6 +844,24 @@ const TrainingUI = () => {
                 </LinearGradient>
             </TouchableOpacity>
 
+            <Text style={styles.sectionTitle}>PRO DRILLS</Text>
+            {[
+                { title: 'Explosive Pushups', desc: '3 Sets • 12 Reps', icon: <Flame size={16} color="#FF4500" /> },
+                { title: 'Jump Squats', desc: '4 Sets • 15 Reps', icon: <Activity size={16} color="#00FF7F" /> },
+                { title: 'Core Stabilizer Plank', desc: '3 Sets • 60 Secs', icon: <Shield size={16} color="#4169E1" /> },
+            ].map((drill, idx) => (
+                <View key={idx} style={styles.drillRow}>
+                    <View style={styles.drillIconArea}>{drill.icon}</View>
+                    <View style={styles.drillInfo}>
+                        <Text style={styles.drillTitle}>{drill.title}</Text>
+                        <Text style={styles.drillDesc}>{drill.desc}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.drillActionBtn} onPress={() => Alert.alert('Play Drill', `Starting ${drill.title}`)}>
+                        <ChevronRight size={18} color="#FF4500" />
+                    </TouchableOpacity>
+                </View>
+            ))}
+
         </Animated.View>
     );
 };
@@ -1209,6 +1227,13 @@ const styles = StyleSheet.create({
     trainHeroFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 15 },
     trainHeroSub: { color: '#888', fontSize: 11, fontWeight: '700' },
     playBtnCirc: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FF4500', justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+
+    drillRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', padding: 18, borderRadius: 20, marginBottom: 15, borderWidth: 1, borderColor: '#1a1a1a' },
+    drillIconArea: { width: 44, height: 44, borderRadius: 18, backgroundColor: '#1a1a1a', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+    drillInfo: { flex: 1 },
+    drillTitle: { color: 'white', fontSize: 13, fontWeight: '800', marginBottom: 4 },
+    drillDesc: { color: '#666', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+    drillActionBtn: { padding: 10, backgroundColor: '#FF450015', borderRadius: 12 },
 
     homeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
     homeGreeting: { color: '#666', fontSize: 10, fontWeight: '900', letterSpacing: 1 },

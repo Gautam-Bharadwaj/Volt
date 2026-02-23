@@ -41,11 +41,11 @@ import {
     TrendingUp,
     Plus,
     X,
-    Dumbbell,
     Play,
     CheckCircle,
     Clock,
-    ChevronRight
+    ChevronRight,
+    ShoppingCart
 } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -61,6 +61,7 @@ const { width } = Dimensions.get('window');
 
 export default function App() {
     const [globalData, setGlobalData] = useState(null);
+    const [cart, setCart] = useState([]);
 
     useEffect(() => {
         fetch(`${API_URL}/api/data/all`)
@@ -81,8 +82,30 @@ export default function App() {
         );
     }
 
+    const addToCart = (product) => {
+        setCart(prev => {
+            const exists = prev.find(p => p.id === product.id);
+            if (exists) {
+                return prev.map(p => p.id === product.id ? { ...p, qty: p.qty + 1 } : p);
+            }
+            return [...prev, { ...product, qty: 1 }];
+        });
+        Alert.alert('Added to Cart', `${product.name} added to your bag.`);
+    };
+
+    const updateQty = (id, delta) => {
+        setCart(prev => prev.map(p => {
+            if (p.id === id) {
+                return { ...p, qty: p.qty + delta };
+            }
+            return p;
+        }).filter(p => p.qty > 0));
+    };
+
+    const clearCart = () => setCart([]);
+
     return (
-        <DataContext.Provider value={globalData}>
+        <DataContext.Provider value={{ ...globalData, cart, addToCart, updateQty, clearCart }}>
             <SafeAreaProvider>
                 <MainApp />
             </SafeAreaProvider>
@@ -95,7 +118,7 @@ export default function App() {
  * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
  */
 const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
-    const { sports, sportProducts } = React.useContext(DataContext);
+    const { sports, sportProducts, addToCart } = React.useContext(DataContext);
 
     const banners = [
         {
@@ -195,7 +218,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
             <View style={styles.gridContainerB}>
                 {(sportProducts[selectedSport] || []).map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay(idx * 50)} style={styles.miniCardB}>
-                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => Alert.alert('Product View', item.name)}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => addToCart(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
                             <View style={styles.miniBrandBadge}>
                                 <Text style={styles.miniBrandText}>{item.brand}</Text>
@@ -213,7 +236,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
 };
 
 const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSelectedPosition }) => {
-    const { sports, sportPositions, positionGear } = React.useContext(DataContext);
+    const { sports, sportPositions, positionGear, addToCart } = React.useContext(DataContext);
 
     const getPositionStats = (pos) => {
         const statsMap = {
@@ -317,7 +340,7 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
             <View style={styles.gearGrid}>
                 {(positionGear[selectedPosition] || positionGear['Striker']).map((item, idx) => (
                     <Animated.View key={item.id} entering={SlideInRight.delay(idx * 150)} style={styles.productCard}>
-                        <TouchableOpacity activeOpacity={0.9} onPress={() => Alert.alert('View Gear', item.name)}>
+                        <TouchableOpacity activeOpacity={0.9} onPress={() => addToCart(item)}>
                             <View style={styles.imgWrapper}>
                                 <Image source={{ uri: item.image }} style={styles.productImg} />
                                 <View style={styles.tagBadge}>
@@ -798,7 +821,7 @@ const AuthUI = ({ onLogin }) => {
 };
 
 const SearchResultsUI = ({ query }) => {
-    const { sportProducts, positionGear } = React.useContext(DataContext);
+    const { sportProducts, positionGear, addToCart } = React.useContext(DataContext);
 
     const allProducts = useMemo(() => {
         let products = [];
@@ -829,7 +852,7 @@ const SearchResultsUI = ({ query }) => {
             <View style={styles.gridContainerB}>
                 {filtered.map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
-                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => Alert.alert('Product View', item.name)}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => addToCart(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
                             {item.brand && (
                                 <View style={styles.miniBrandBadge}>
@@ -1086,6 +1109,96 @@ const TrainingUI = ({ streak }) => {
     );
 };
 
+const CartUI = ({ onClose }) => {
+    const { cart, updateQty, clearCart } = React.useContext(DataContext);
+
+    const total = cart.reduce((acc, item) => {
+        const p = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+        return acc + p * item.qty;
+    }, 0);
+
+    return (
+        <Animated.View entering={FadeIn.duration(400)} style={styles.cartPremiumOverlay}>
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={styles.cartPremiumHeader}>
+                    <TouchableOpacity style={styles.cartPremiumBack} onPress={onClose}>
+                        <ChevronRight size={28} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
+                    </TouchableOpacity>
+                    <Text style={styles.cartPremiumTitle}>YOUR GEAR BAG</Text>
+                    <View style={{ width: 28 }} />
+                </View>
+
+                {cart.length === 0 ? (
+                    <View style={styles.cartEmptyContainer}>
+                        <ShoppingCart size={80} color="#333" />
+                        <Text style={styles.cartEmptyText}>YOUR BAG IS EMPTY</Text>
+                        <Text style={styles.cartEmptySub}>Time to load up on elite equipment.</Text>
+                        <TouchableOpacity style={styles.cartContinueBtn} onPress={onClose}>
+                            <Text style={styles.cartContinueText}>BROWSE SHOP</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                        <ScrollView style={styles.cartPremiumList} showsVerticalScrollIndicator={false}>
+                            {cart.map((item, idx) => (
+                                <Animated.View entering={FadeInUp.delay(idx * 100)} key={item.id} style={styles.cartPremiumCard}>
+                                    <View style={styles.cartPremiumImgBox}>
+                                        <Image source={{ uri: item.image }} style={styles.cartPremiumImg} resizeMode="cover" />
+                                    </View>
+                                    <View style={styles.cartPremiumInfo}>
+                                        {item.brand && <Text style={styles.cartPremiumBrand}>{item.brand.toUpperCase()}</Text>}
+                                        <Text style={styles.cartPremiumName} numberOfLines={2}>{item.name}</Text>
+                                        <Text style={styles.cartPremiumPrice}>{item.price}</Text>
+
+                                        <View style={styles.cartPremiumQtyRow}>
+                                            <TouchableOpacity onPress={() => updateQty(item.id, -1)} style={styles.qtyPremiumBtn}>
+                                                <Text style={styles.qtyPremiumBtnText}>-</Text>
+                                            </TouchableOpacity>
+                                            <Text style={styles.qtyPremiumVal}>{item.qty}</Text>
+                                            <TouchableOpacity onPress={() => updateQty(item.id, 1)} style={styles.qtyPremiumBtn}>
+                                                <Text style={styles.qtyPremiumBtnText}>+</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </Animated.View>
+                            ))}
+                        </ScrollView>
+
+                        <View style={styles.cartPremiumFooter}>
+                            <View style={styles.cartSummaryRow}>
+                                <Text style={styles.cartSummaryLabel}>SUBTOTAL</Text>
+                                <Text style={styles.cartSummaryVal}>${total.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.cartSummaryRow}>
+                                <Text style={styles.cartSummaryLabel}>SHIPPING (ELITE)</Text>
+                                <Text style={styles.cartSummaryVal}>FREE</Text>
+                            </View>
+                            <View style={[styles.cartSummaryRow, { marginTop: 15, borderTopWidth: 1, borderColor: '#333', paddingTop: 15 }]}>
+                                <Text style={styles.cartSummaryTotalLabel}>TOTAL</Text>
+                                <Text style={styles.cartSummaryTotalVal}>${total.toFixed(2)}</Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.cartPremiumCheckoutBtn}
+                                onPress={() => {
+                                    Alert.alert('Checkout Complete', 'Your gear will arrive in 2 days!');
+                                    clearCart();
+                                    onClose();
+                                }}
+                            >
+                                <LinearGradient colors={['#FF4500', '#FF2E00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cartPremiumCheckGrad}>
+                                    <Text style={styles.cartPremiumCheckText}>SECURE CHECKOUT</Text>
+                                    <Shield size={18} color="white" style={{ marginLeft: 8 }} />
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+            </SafeAreaView>
+        </Animated.View>
+    );
+};
+
 function MainApp() {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1095,6 +1208,10 @@ function MainApp() {
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
     const [showPlusMenu, setShowPlusMenu] = useState(false);
+    const [showCart, setShowCart] = useState(false);
+
+    const { cart } = React.useContext(DataContext);
+    const totalQty = cart ? cart.reduce((acc, item) => acc + item.qty, 0) : 0;
 
     const [stats, setStats] = useState({
         score: 0,
@@ -1170,9 +1287,6 @@ function MainApp() {
     }
 
 
-
-
-
     return (
         <View style={styles.container}>
             <StatusBar style="light" />
@@ -1189,6 +1303,16 @@ function MainApp() {
                         <TouchableOpacity style={[styles.topIconBtn, styles.streakHeaderBadge]} onPress={() => Alert.alert('Daily Streak', `You are on a ${stats.streak} day streak!`)}>
                             <Flame size={16} color="#FFD700" fill="#FFD700" />
                             <Text style={styles.streakHeaderText}>{stats.streak}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.topIconBtn} onPress={() => setShowCart(true)}>
+                            <View>
+                                <ShoppingCart size={24} color="white" />
+                                {totalQty > 0 && (
+                                    <View style={styles.cartBadgeNumWrap}>
+                                        <Text style={styles.cartBadgeNumText}>{totalQty}</Text>
+                                    </View>
+                                )}
+                            </View>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.topIconBtn} onPress={() => Alert.alert('Notifications', 'Your gear is on its way!')}>
                             <Bell size={24} color="white" />
@@ -1303,6 +1427,8 @@ function MainApp() {
                     <NavTab icon={<User size={24} />} label="PROFILE" active={activeTab === 'Profile'} onPress={() => { setActiveTab('Profile'); setShowPlusMenu(false); }} />
                 </View>
             </LinearGradient>
+
+            {showCart && <CartUI onClose={() => setShowCart(false)} />}
         </View>
     );
 }
@@ -1575,5 +1701,39 @@ const styles = StyleSheet.create({
     authSubmitGradBar: { flexDirection: 'row', paddingVertical: 18, justifyContent: 'center', alignItems: 'center' },
     authSubmitTextStr: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 2 },
     authToggleClick: { marginTop: 25, alignItems: 'center' },
-    authToggleLabel: { color: '#888', fontSize: 9, fontWeight: '900', letterSpacing: 1 }
+    authToggleLabel: { color: '#888', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+
+    // PREMIUM CART STYLES
+    cartBadgeNumWrap: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FF4500', width: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+    cartBadgeNumText: { color: 'white', fontSize: 9, fontWeight: '900' },
+    cartPremiumOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#0a0a0a', zIndex: 100 },
+    cartPremiumHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#222' },
+    cartPremiumBack: { padding: 5 },
+    cartPremiumTitle: { color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 2 },
+    cartEmptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    cartEmptyText: { color: 'white', fontSize: 20, fontWeight: '900', letterSpacing: 1.5, marginTop: 25 },
+    cartEmptySub: { color: '#666', fontSize: 12, fontWeight: '700', marginTop: 10, textAlign: 'center' },
+    cartContinueBtn: { marginTop: 30, backgroundColor: '#FF4500', paddingHorizontal: 30, paddingVertical: 15, borderRadius: 25 },
+    cartContinueText: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+    cartPremiumList: { padding: 20, paddingTop: 10 },
+    cartPremiumCard: { flexDirection: 'row', backgroundColor: '#111', borderRadius: 24, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: '#222' },
+    cartPremiumImgBox: { width: 90, height: 90, borderRadius: 16, backgroundColor: '#1a1a1a', overflow: 'hidden', marginRight: 15 },
+    cartPremiumImg: { width: '100%', height: '100%' },
+    cartPremiumInfo: { flex: 1, justifyContent: 'center' },
+    cartPremiumBrand: { color: '#FF4500', fontSize: 9, fontWeight: '900', letterSpacing: 1, marginBottom: 4 },
+    cartPremiumName: { color: 'white', fontSize: 14, fontWeight: '800', marginBottom: 8, lineHeight: 20 },
+    cartPremiumPrice: { color: '#FFD700', fontSize: 15, fontWeight: '900' },
+    cartPremiumQtyRow: { flexDirection: 'row', alignItems: 'center', position: 'absolute', bottom: 0, right: 0, backgroundColor: '#1a1a1a', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+    qtyPremiumBtn: { width: 28, height: 28, justifyContent: 'center', alignItems: 'center', backgroundColor: '#222', borderRadius: 8 },
+    qtyPremiumBtnText: { color: 'white', fontSize: 14, fontWeight: '900' },
+    qtyPremiumVal: { color: 'white', fontSize: 14, fontWeight: '900', marginHorizontal: 12 },
+    cartPremiumFooter: { backgroundColor: '#111', padding: 25, borderTopLeftRadius: 35, borderTopRightRadius: 35, borderWidth: 1, borderColor: '#222' },
+    cartSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    cartSummaryLabel: { color: '#888', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+    cartSummaryVal: { color: 'white', fontSize: 14, fontWeight: '900' },
+    cartSummaryTotalLabel: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },
+    cartSummaryTotalVal: { color: '#FF4500', fontSize: 24, fontWeight: '900' },
+    cartPremiumCheckoutBtn: { width: '100%', borderRadius: 25, overflow: 'hidden', marginTop: 25 },
+    cartPremiumCheckGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
+    cartPremiumCheckText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 }
 });

@@ -859,7 +859,7 @@ const SearchResultsUI = ({ query }) => {
     );
 };
 
-const TrainingUI = () => {
+const TrainingUI = ({ streak }) => {
     const [activeZone, setActiveZone] = useState('FULL BODY');
     const [activeDrill, setActiveDrill] = useState(null);
     const [timerState, setTimerState] = useState('IDLE'); // IDLE, RUNNING, PAUSED
@@ -988,6 +988,47 @@ const TrainingUI = () => {
         );
     }
 
+    const [showCalendar, setShowCalendar] = useState(false);
+
+    if (showCalendar) {
+        return (
+            <Animated.View entering={FadeIn.duration(400)} style={styles.drillActiveWrapper}>
+                <TouchableOpacity style={styles.drillBackWrap} onPress={() => setShowCalendar(false)}>
+                    <ChevronRight size={24} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
+                    <Text style={styles.drillBackText}>BACK TO LAB</Text>
+                </TouchableOpacity>
+
+                <View style={styles.drillPlayingCenter}>
+                    <View style={styles.drillBigIconContainer}>
+                        <Calendar size={60} color="#FFD700" />
+                    </View>
+                    <Text style={styles.drillActiveTitle}>DAILY STREAK</Text>
+
+                    <View style={[styles.timerMockBox, { flexDirection: 'column', paddingVertical: 20 }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <Flame size={40} color="#FF4500" fill="#FF4500" />
+                            <Text style={{ color: 'white', fontSize: 40, fontWeight: '900', marginLeft: 15, letterSpacing: 2 }}>{streak}</Text>
+                        </View>
+                        <Text style={{ color: '#FFD700', fontSize: 13, fontWeight: '800', letterSpacing: 1.5 }}>DAYS IN A ROW</Text>
+                    </View>
+
+                    <Text style={{ color: '#888', marginTop: 25, fontSize: 13, fontWeight: '700', textAlign: 'center', width: '80%', lineHeight: 20 }}>
+                        Keep training every day to increase your streak and unlock exclusive gear & XP multipliers!
+                    </Text>
+                </View>
+
+                <TouchableOpacity
+                    style={styles.drillCompleteBtn}
+                    onPress={() => setShowCalendar(false)}
+                >
+                    <LinearGradient colors={['#FF4500', '#FF2E00']} style={styles.drillCompleteGrad}>
+                        <Text style={styles.drillCompleteText}>RETURN TO TRAINING</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    }
+
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
             <View style={styles.arenaHeader}>
@@ -995,7 +1036,7 @@ const TrainingUI = () => {
                     <Text style={styles.arenaTag}>PERFORMANCE LAB</Text>
                     <Text style={styles.arenaTitle}>TRAINING HUB</Text>
                 </View>
-                <TouchableOpacity style={styles.leaderboardBtn} onPress={() => Alert.alert('My Plan', 'Opening Custom Plan...')}>
+                <TouchableOpacity style={styles.leaderboardBtn} onPress={() => setShowCalendar(true)}>
                     <Calendar size={18} color="#FFD700" />
                 </TouchableOpacity>
             </View>
@@ -1145,6 +1186,10 @@ function MainApp() {
                         />
                     </View>
                     <View style={styles.topIcons}>
+                        <TouchableOpacity style={[styles.topIconBtn, styles.streakHeaderBadge]} onPress={() => Alert.alert('Daily Streak', `You are on a ${stats.streak} day streak!`)}>
+                            <Flame size={16} color="#FFD700" fill="#FFD700" />
+                            <Text style={styles.streakHeaderText}>{stats.streak}</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.topIconBtn} onPress={() => Alert.alert('Notifications', 'Your gear is on its way!')}>
                             <Bell size={24} color="white" />
                         </TouchableOpacity>
@@ -1213,7 +1258,7 @@ function MainApp() {
                                 />
                         )}
                         {activeTab === 'Arena' && <ArenaUI />}
-                        {activeTab === 'Training' && <TrainingUI />}
+                        {activeTab === 'Training' && <TrainingUI streak={stats.streak} />}
                         {activeTab === 'Profile' && <ProfileUI stats={stats} onLogout={handleLogout} />}
                     </>
                 )}
@@ -1276,8 +1321,10 @@ const styles = StyleSheet.create({
     topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 4 },
     logoGroup: { height: 90, width: 240, justifyContent: 'center', marginLeft: -35 },
     logoImage: { width: '100%', height: '100%' },
-    topIcons: { flexDirection: 'row' },
+    topIcons: { flexDirection: 'row', alignItems: 'center' },
     topIconBtn: { marginLeft: 15 },
+    streakHeaderBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFD70020', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 15, borderWidth: 1, borderColor: '#FFD70050' },
+    streakHeaderText: { color: '#FFD700', fontSize: 13, fontWeight: '900', marginLeft: 6 },
 
     searchContainer: { paddingHorizontal: 24, marginTop: 0 },
     searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', borderRadius: 24, paddingHorizontal: 15, height: 55, borderWidth: 1, borderColor: '#222' },

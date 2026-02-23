@@ -494,56 +494,115 @@ const ArenaUI = () => {
                 ))}
             </ScrollView>
 
-            {tournaments.length === 0 && (
-                <View style={{ marginTop: 40, alignItems: 'center' }}>
-                    <Activity size={24} color="#FF4500" />
-                    <Text style={{ color: '#666', marginTop: 15, fontWeight: '800' }}>LOADING ARENA EVENTS...</Text>
+            {activeArenaTab === 'ACTIVE' && (
+                <>
+                    {tournaments.length === 0 && (
+                        <View style={{ marginTop: 40, alignItems: 'center' }}>
+                            <Activity size={24} color="#FF4500" />
+                            <Text style={{ color: '#666', marginTop: 15, fontWeight: '800' }}>LOADING ARENA EVENTS...</Text>
+                        </View>
+                    )}
+
+                    {tournaments.map((item, i) => (
+                        <View key={item.id || i} style={styles.tournCardEnhanced}>
+                            <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.tournInnerEnhanced}>
+                                <View style={styles.tournTop}>
+                                    <View style={styles.tournMetaRow}>
+                                        <View style={styles.tournBadgeAbs}>
+                                            <Text style={styles.tournBadgeText}>{item.tag}</Text>
+                                        </View>
+                                        {item.viewers !== '0' && (
+                                            <View style={styles.viewerBadge}>
+                                                <View style={styles.liveDot} />
+                                                <Text style={styles.viewerText}>{item.viewers} WATCHING</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <Text style={styles.tournNameEnhanced}>{item.name}</Text>
+                                </View>
+                                <View style={styles.tournMid}>
+                                    <View style={styles.tournStat}>
+                                        <Text style={styles.tournStatLab}>PRIZE POOL</Text>
+                                        <Text style={styles.tournStatValPrize}>{item.prize}</Text>
+                                    </View>
+                                    <View style={styles.tournStat}>
+                                        <Text style={styles.tournStatLab}>ATHLETES</Text>
+                                        <Text style={styles.tournStatVal}>{item.players}</Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.arenaJoinBtn}
+                                    onPress={() => Alert.alert('Arena Entry', `Joining ${item.name}...`)}
+                                >
+                                    <LinearGradient colors={['#FF4500', '#FF2E00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.arenaJoinGrad}>
+                                        <Text style={styles.arenaJoinText}>ENTER ARENA</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                        </View>
+                    ))}
+                </>
+            )}
+
+            {activeArenaTab === 'UPCOMING' && (
+                <View style={{ marginTop: 10 }}>
+                    {[
+                        { title: 'WINTER CHAMPIONSHIP', date: 'STARTS IN 2 DAYS', prize: '$100K' },
+                        { title: 'ELITE PRO LEAGUE', date: 'NEXT WEEKEND', prize: '$250K' },
+                    ].map((item, i) => (
+                        <View key={i} style={styles.tournCardEnhanced}>
+                            <LinearGradient colors={['#111', '#050505']} style={styles.tournInnerEnhanced}>
+                                <View style={styles.tournMetaRow}>
+                                    <View style={[styles.tournBadgeAbs, { backgroundColor: '#FFD700' }]}>
+                                        <Text style={styles.tournBadgeText}>{item.date}</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.tournNameEnhanced}>{item.title}</Text>
+                                <Text style={{ color: '#FF4500', fontSize: 16, fontWeight: '900', marginTop: 10 }}>{item.prize} POOL</Text>
+                                <TouchableOpacity style={[styles.arenaJoinBtn, { backgroundColor: '#333' }]} onPress={() => Alert.alert('Reminder Set', 'We will notify you!')}>
+                                    <View style={styles.arenaJoinGrad}>
+                                        <Text style={styles.arenaJoinText}>SET REMINDER</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </LinearGradient>
+                        </View>
+                    ))}
                 </View>
             )}
 
-            {tournaments.map((item, i) => (
-                <View key={item.id || i} style={styles.tournCardEnhanced}>
-                    <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.tournInnerEnhanced}>
-                        <View style={styles.tournTop}>
-                            <View style={styles.tournMetaRow}>
-                                <View style={styles.tournBadgeAbs}>
-                                    <Text style={styles.tournBadgeText}>{item.tag}</Text>
-                                </View>
-                                {item.viewers !== '0' && (
-                                    <View style={styles.viewerBadge}>
-                                        <View style={styles.liveDot} />
-                                        <Text style={styles.viewerText}>{item.viewers} WATCHING</Text>
+            {activeArenaTab === 'RESULTS' && (
+                <View style={{ marginTop: 10 }}>
+                    {[
+                        { title: 'SUMMER SHOWDOWN', winner: 'TEAM ALPHA', prize: '$50K' },
+                        { title: 'STREET MASTERS', winner: 'GAUTAM B. (MVP)', prize: '$10K' },
+                    ].map((item, i) => (
+                        <View key={i} style={styles.tournCardEnhanced}>
+                            <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.tournInnerEnhanced}>
+                                <View style={styles.tournMetaRow}>
+                                    <View style={[styles.tournBadgeAbs, { backgroundColor: '#4169E1' }]}>
+                                        <Text style={styles.tournBadgeText}>COMPLETED</Text>
                                     </View>
-                                )}
-                            </View>
-                            <Text style={styles.tournNameEnhanced}>{item.name}</Text>
-                        </View>
-                        <View style={styles.tournMid}>
-                            <View style={styles.tournStat}>
-                                <Text style={styles.tournStatLab}>PRIZE POOL</Text>
-                                <Text style={styles.tournStatValPrize}>{item.prize}</Text>
-                            </View>
-                            <View style={styles.tournStat}>
-                                <Text style={styles.tournStatLab}>ATHLETES</Text>
-                                <Text style={styles.tournStatVal}>{item.players}</Text>
-                            </View>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.arenaJoinBtn}
-                            onPress={() => Alert.alert('Arena Entry', `Joining ${item.name}...`)}
-                        >
-                            <LinearGradient
-                                colors={['#FF4500', '#FF2E00']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.arenaJoinGrad}
-                            >
-                                <Text style={styles.arenaJoinText}>ENTER ARENA</Text>
+                                </View>
+                                <Text style={styles.tournNameEnhanced}>{item.title}</Text>
+                                <Text style={{ color: '#00FF7F', fontSize: 14, fontWeight: '900', marginTop: 10 }}>WINNER: {item.winner}</Text>
                             </LinearGradient>
-                        </TouchableOpacity>
-                    </LinearGradient>
+                        </View>
+                    ))}
                 </View>
-            ))}
+            )}
+
+            {activeArenaTab === 'CLUBS' && (
+                <View style={{ marginTop: 60, alignItems: 'center' }}>
+                    <Shield size={60} color="#4169E1" />
+                    <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', marginTop: 20 }}>CLUB HOUSES</Text>
+                    <Text style={{ color: '#666', marginTop: 10, fontWeight: '800' }}>Form your squad and dominate.</Text>
+                    <TouchableOpacity style={[styles.arenaJoinBtn, { width: 200, marginTop: 40 }]} onPress={() => Alert.alert('Clubs', 'Coming in v1.2')}>
+                        <LinearGradient colors={['#4169E1', '#00008B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.arenaJoinGrad}>
+                            <Text style={styles.arenaJoinText}>FORM A CLUB</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+            )}
         </Animated.View>
     );
 };
@@ -803,8 +862,31 @@ const SearchResultsUI = ({ query }) => {
 const TrainingUI = () => {
     const [activeZone, setActiveZone] = useState('FULL BODY');
     const [activeDrill, setActiveDrill] = useState(null);
+    const [timerState, setTimerState] = useState('IDLE'); // IDLE, RUNNING, PAUSED
+    const [elapsed, setElapsed] = useState(0);
 
     const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
+
+    useEffect(() => {
+        let idx;
+        if (timerState === 'RUNNING') {
+            idx = setInterval(() => {
+                setElapsed(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(idx);
+    }, [timerState]);
+
+    useEffect(() => {
+        setTimerState('IDLE');
+        setElapsed(0);
+    }, [activeDrill]);
+
+    const formatTime = (secs) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
 
     const trainingData = {
         'FULL BODY': {
@@ -867,15 +949,32 @@ const TrainingUI = () => {
                     <Text style={styles.drillActiveTarget}>{activeDrill.desc}</Text>
 
                     <View style={styles.timerMockBox}>
-                        <Clock size={20} color="#FFD700" />
-                        <Text style={styles.timerMockText}>00:00</Text>
+                        <Clock size={20} color={timerState === 'IDLE' ? '#888' : '#FFD700'} />
+                        <Text style={[styles.timerMockText, timerState === 'RUNNING' && { color: '#FFD700' }]}>
+                            {formatTime(elapsed)}
+                        </Text>
+                    </View>
+
+                    <View style={styles.drillControlsRow}>
+                        {timerState !== 'RUNNING' ? (
+                            <TouchableOpacity style={[styles.drillCtrlBtn, { backgroundColor: '#FF4500' }]} onPress={() => setTimerState('RUNNING')}>
+                                <Play size={20} color="white" fill="white" />
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity style={[styles.drillCtrlBtn, { backgroundColor: '#FF8C00' }]} onPress={() => setTimerState('PAUSED')}>
+                                <Text style={styles.drillPauseIcon}>||</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity style={[styles.drillCtrlBtn, { backgroundColor: '#cc0000' }]} onPress={() => { setTimerState('IDLE'); setElapsed(0); }}>
+                            <View style={styles.drillStopIcon} />
+                        </TouchableOpacity>
                     </View>
                 </View>
 
                 <TouchableOpacity
                     style={styles.drillCompleteBtn}
                     onPress={() => {
-                        Alert.alert('Session Complete! 🏆', '+10 XP added to your profile.');
+                        Alert.alert('Session Complete! 🏆', `+10 XP added. Duration: ${formatTime(elapsed)}`);
                         setActiveDrill(null);
                     }}
                 >
@@ -1323,6 +1422,12 @@ const styles = StyleSheet.create({
     drillActiveTarget: { color: '#FF4500', fontSize: 14, fontWeight: '900', marginTop: 10, letterSpacing: 1 },
     timerMockBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 40, borderWidth: 1, borderColor: '#222' },
     timerMockText: { color: 'white', fontSize: 24, fontWeight: '900', marginLeft: 10, letterSpacing: 2 },
+
+    drillControlsRow: { flexDirection: 'row', marginTop: 30, gap: 20 },
+    drillCtrlBtn: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center' },
+    drillPauseIcon: { color: 'white', fontSize: 18, fontWeight: '900', letterSpacing: 2 },
+    drillStopIcon: { width: 16, height: 16, backgroundColor: 'white', borderRadius: 2 },
+
     drillCompleteBtn: { width: '100%', borderRadius: 20, overflow: 'hidden', marginBottom: 20 },
     drillCompleteGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
     drillCompleteText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },

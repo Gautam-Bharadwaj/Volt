@@ -41,7 +41,11 @@ import {
     TrendingUp,
     Plus,
     X,
-    Dumbbell
+    Dumbbell,
+    Play,
+    CheckCircle,
+    Clock,
+    ChevronRight
 } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -797,13 +801,30 @@ const SearchResultsUI = ({ query }) => {
 };
 
 const TrainingUI = () => {
+    const [activeZone, setActiveZone] = useState('FULL BODY');
+
+    const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
+
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-            <View style={{ flex: 1, alignItems: 'center', marginTop: 100 }}>
-                <Dumbbell size={60} color="#FF4500" />
-                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', marginTop: 20 }}>TRAINING HUB</Text>
-                <Text style={{ color: '#666', fontSize: 13, fontWeight: '800', marginTop: 10 }}>Personalized Programs Arriving Soon!</Text>
+            <View style={styles.arenaHeader}>
+                <View>
+                    <Text style={styles.arenaTag}>PERFORMANCE LAB</Text>
+                    <Text style={styles.arenaTitle}>TRAINING HUB</Text>
+                </View>
+                <TouchableOpacity style={styles.leaderboardBtn} onPress={() => Alert.alert('My Plan', 'Opening Custom Plan...')}>
+                    <Calendar size={18} color="#FFD700" />
+                </TouchableOpacity>
             </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.arenaTabs}>
+                {zones.map((zone, idx) => (
+                    <TouchableOpacity key={zone} style={[styles.arenaTab, activeZone === zone && styles.arenaTabActive]} onPress={() => setActiveZone(zone)}>
+                        <Text style={[styles.arenaTabText, activeZone === zone && styles.arenaTabTextActive]}>{zone}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
         </Animated.View>
     );
 };

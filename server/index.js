@@ -111,10 +111,34 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Users
-app.get('/api/user/profile', authenticateToken, (req, res) => {
-    const profile = req.user.toJSON();
-    delete profile.password;
-    res.status(200).json(profile);
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = req.user;
+        const now = new Date();
+
+        if (!user.lastLogin) {
+            user.streak = 1;
+            user.lastLogin = now;
+        } else {
+            const timeDiff = now.getTime() - new Date(user.lastLogin).getTime();
+            const hoursDiff = timeDiff / (1000 * 3600);
+
+            if (hoursDiff > 24 && hoursDiff <= 48) {
+                user.streak += 1;
+                user.lastLogin = now;
+            } else if (hoursDiff > 48) {
+                user.streak = 1;
+                user.lastLogin = now;
+            }
+        }
+        await user.save();
+
+        const profile = user.toJSON();
+        delete profile.password;
+        res.status(200).json(profile);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.post('/api/user/workout', authenticateToken, async (req, res) => {

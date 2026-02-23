@@ -123,6 +123,16 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
     const { sports, sportProducts, setActiveProduct } = React.useContext(DataContext);
     const [sortOrder, setSortOrder] = useState('default');
 
+    const sortedProducts = useMemo(() => {
+        let products = [...(sportProducts[selectedSport] || [])];
+        if (sortOrder === 'low') {
+            products.sort((a, b) => (a.priceValue || 0) - (b.priceValue || 0));
+        } else if (sortOrder === 'high') {
+            products.sort((a, b) => (b.priceValue || 0) - (a.priceValue || 0));
+        }
+        return products;
+    }, [sportProducts, selectedSport, sortOrder]);
+
     const banners = [
         {
             tag: 'SEASON 2026',
@@ -237,15 +247,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
             </View>
 
             <View style={styles.gridContainerB}>
-                {useMemo(() => {
-                    let products = [...(sportProducts[selectedSport] || [])];
-                    if (sortOrder === 'low') {
-                        products.sort((a, b) => (a.priceValue || 0) - (b.priceValue || 0));
-                    } else if (sortOrder === 'high') {
-                        products.sort((a, b) => (b.priceValue || 0) - (a.priceValue || 0));
-                    }
-                    return products;
-                }, [sportProducts, selectedSport, sortOrder]).map((item, idx) => (
+                {sortedProducts.map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
                         <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => setActiveProduct(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />

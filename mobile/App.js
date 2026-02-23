@@ -1490,6 +1490,7 @@ const OnboardingUI = ({ onComplete }) => {
     );
 };
 
+// --- AUTH & MAIN APP ---
 function MainApp() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [activeTab, setActiveTab] = useState('Home');

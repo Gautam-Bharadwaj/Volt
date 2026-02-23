@@ -1502,6 +1502,7 @@ function MainApp() {
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showCart, setShowCart] = useState(false);
 
+    // Onboarding Persistence
     const completeOnboarding = async () => {
         await AsyncStorage.setItem('hasBoarded', 'true');
         setShowOnboarding(false);

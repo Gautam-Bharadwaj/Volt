@@ -805,6 +805,51 @@ const TrainingUI = () => {
 
     const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
 
+    const trainingData = {
+        'FULL BODY': {
+            hero: { title: 'TOTAL BODY ANNIHILATOR', duration: '55 MINS', sub: 'Compound Movements', tag: 'INTENSE' },
+            drills: [
+                { title: 'Explosive Pushups', desc: '3 Sets • 12 Reps', icon: <Flame size={16} color="#FF4500" /> },
+                { title: 'Jump Squats', desc: '4 Sets • 15 Reps', icon: <Activity size={16} color="#00FF7F" /> },
+                { title: 'Burpee Broad Jumps', desc: '3 Sets • 10 Reps', icon: <TrendingUp size={16} color="#FFD700" /> },
+            ]
+        },
+        'CORE': {
+            hero: { title: 'CORE SHREDDER', duration: '20 MINS', sub: 'Abs & Obliques', tag: 'FOCUSED' },
+            drills: [
+                { title: 'Core Stabilizer Plank', desc: '3 Sets • 60 Secs', icon: <Shield size={16} color="#4169E1" /> },
+                { title: 'Russian Twists', desc: '4 Sets • 20 Reps', icon: <CheckCircle size={16} color="#00FF7F" /> },
+                { title: 'Hanging Leg Raises', desc: '3 Sets • 12 Reps', icon: <Flame size={16} color="#FF4500" /> },
+            ]
+        },
+        'UPPER': {
+            hero: { title: 'UPPER BODY BLAST', duration: '45 MINS', sub: 'Chest, Shoulders & Triceps', tag: 'POWER' },
+            drills: [
+                { title: 'Incline Dumbbell Press', desc: '4 Sets • 10 Reps', icon: <Dumbbell size={16} color="#FF4500" /> },
+                { title: 'Overhead Press', desc: '4 Sets • 8 Reps', icon: <TrendingUp size={16} color="#FFD700" /> },
+                { title: 'Tricep Dips', desc: '3 Sets • 15 Reps', icon: <Activity size={16} color="#00FF7F" /> },
+            ]
+        },
+        'LOWER': {
+            hero: { title: 'LOWER BODY CRUSH', duration: '50 MINS', sub: 'Quads, Glutes & Hamstrings', tag: 'HEAVY' },
+            drills: [
+                { title: 'Barbell Squats', desc: '4 Sets • 8 Reps', icon: <Shield size={16} color="#4169E1" /> },
+                { title: 'Romanian Deadlifts', desc: '4 Sets • 10 Reps', icon: <Flame size={16} color="#FF4500" /> },
+                { title: 'Walking Lunges', desc: '3 Sets • 20 Steps', icon: <Activity size={16} color="#00FF7F" /> },
+            ]
+        },
+        'HIIT': {
+            hero: { title: 'CARDIO BURNER', duration: '30 MINS', sub: 'High Intensity Intervals', tag: 'EXTREME' },
+            drills: [
+                { title: 'Mountain Climbers', desc: '4 Sets • 45 Secs', icon: <Activity size={16} color="#00FF7F" /> },
+                { title: 'Kettlebell Swings', desc: '4 Sets • 20 Reps', icon: <Flame size={16} color="#FF4500" /> },
+                { title: 'Battle Ropes', desc: '3 Sets • 30 Secs', icon: <TrendingUp size={16} color="#FFD700" /> },
+            ]
+        }
+    };
+
+    const currentData = trainingData[activeZone];
+
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
             <View style={styles.arenaHeader}>
@@ -826,17 +871,17 @@ const TrainingUI = () => {
             </ScrollView>
 
             <Text style={styles.sectionTitle}>SESSION OF THE DAY</Text>
-            <TouchableOpacity style={styles.trainHeroCard} onPress={() => Alert.alert('Start Session', 'Loading Upper Body Blast...')}>
+            <TouchableOpacity style={styles.trainHeroCard} onPress={() => Alert.alert('Start Session', `Loading ${currentData.hero.title}...`)}>
                 <LinearGradient colors={['#FF450020', '#111']} style={styles.trainHeroGrad}>
                     <View style={styles.trainHeroHeader}>
                         <View style={styles.trainTagBadge}>
-                            <Text style={styles.trainTagText}>INTENSE</Text>
+                            <Text style={styles.trainTagText}>{currentData.hero.tag}</Text>
                         </View>
-                        <Text style={styles.trainDuration}>45 MINS</Text>
+                        <Text style={styles.trainDuration}>{currentData.hero.duration}</Text>
                     </View>
-                    <Text style={styles.trainHeroTitle}>UPPER BODY BLAST</Text>
+                    <Text style={styles.trainHeroTitle}>{currentData.hero.title}</Text>
                     <View style={styles.trainHeroFooter}>
-                        <Text style={styles.trainHeroSub}>Chest, Shoulders & Triceps</Text>
+                        <Text style={styles.trainHeroSub}>{currentData.hero.sub}</Text>
                         <View style={styles.playBtnCirc}>
                             <Play size={16} color="black" fill="black" />
                         </View>
@@ -845,11 +890,7 @@ const TrainingUI = () => {
             </TouchableOpacity>
 
             <Text style={styles.sectionTitle}>PRO DRILLS</Text>
-            {[
-                { title: 'Explosive Pushups', desc: '3 Sets • 12 Reps', icon: <Flame size={16} color="#FF4500" /> },
-                { title: 'Jump Squats', desc: '4 Sets • 15 Reps', icon: <Activity size={16} color="#00FF7F" /> },
-                { title: 'Core Stabilizer Plank', desc: '3 Sets • 60 Secs', icon: <Shield size={16} color="#4169E1" /> },
-            ].map((drill, idx) => (
+            {currentData.drills.map((drill, idx) => (
                 <View key={idx} style={styles.drillRow}>
                     <View style={styles.drillIconArea}>{drill.icon}</View>
                     <View style={styles.drillInfo}>

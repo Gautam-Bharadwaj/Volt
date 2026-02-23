@@ -125,10 +125,18 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
 
     const sortedProducts = useMemo(() => {
         let products = [...(sportProducts[selectedSport] || [])];
+        const getPValue = (item) => {
+            if (item.priceValue !== undefined) return item.priceValue;
+            if (typeof item.price === 'string') {
+                const val = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+                return isNaN(val) ? 0 : val;
+            }
+            return 0;
+        };
         if (sortOrder === 'low') {
-            products.sort((a, b) => (a.priceValue || 0) - (b.priceValue || 0));
+            products.sort((a, b) => getPValue(a) - getPValue(b));
         } else if (sortOrder === 'high') {
-            products.sort((a, b) => (b.priceValue || 0) - (a.priceValue || 0));
+            products.sort((a, b) => getPValue(b) - getPValue(a));
         }
         return products;
     }, [sportProducts, selectedSport, sortOrder]);
@@ -233,13 +241,13 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                     <TouchableOpacity
                         style={[styles.sortBtn, sortOrder === 'low' && styles.sortBtnActive]}
-                        onPress={() => setSortOrder('low')}
+                        onPress={() => setSortOrder(sortOrder === 'low' ? 'default' : 'low')}
                     >
                         <Text style={[styles.sortBtnText, sortOrder === 'low' && styles.sortBtnTextActive]}>$ Low</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.sortBtn, sortOrder === 'high' && styles.sortBtnActive]}
-                        onPress={() => setSortOrder('high')}
+                        onPress={() => setSortOrder(sortOrder === 'high' ? 'default' : 'high')}
                     >
                         <Text style={[styles.sortBtnText, sortOrder === 'high' && styles.sortBtnTextActive]}>$ High</Text>
                     </TouchableOpacity>
@@ -268,6 +276,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
 
 const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSelectedPosition }) => {
     const { sports, sportPositions, positionGear, setActiveProduct } = React.useContext(DataContext);
+    const [sortOrder, setSortOrder] = useState('default');
 
     const getPositionStats = (pos) => {
         const statsMap = {
@@ -283,6 +292,24 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
         };
         return statsMap[pos] || { agi: 80, pow: 80, sta: 80, vis: 80, focus: 'Balanced athletic execution.' };
     };
+
+    const sortedGear = useMemo(() => {
+        let items = [...(positionGear[selectedPosition] || positionGear['Striker'] || [])];
+        const getPValue = (item) => {
+            if (item.priceValue !== undefined) return item.priceValue;
+            if (typeof item.price === 'string') {
+                const val = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+                return isNaN(val) ? 0 : val;
+            }
+            return 0;
+        };
+        if (sortOrder === 'low') {
+            items.sort((a, b) => getPValue(a) - getPValue(b));
+        } else if (sortOrder === 'high') {
+            items.sort((a, b) => getPValue(b) - getPValue(a));
+        }
+        return items;
+    }, [positionGear, selectedPosition, sortOrder]);
 
     const currentStats = getPositionStats(selectedPosition);
 
@@ -364,13 +391,30 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
                 </View>
             </View>
 
-            <View style={styles.stepHeader}>
-                <Text style={styles.stepNumber}>03</Text>
-                <Text style={styles.stepLabel}>PRO RECOMMENDATIONS</Text>
+            <View style={[styles.stepHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.stepNumber}>03</Text>
+                    <Text style={styles.stepLabel}>PRO RECOMMENDATIONS</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'low' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder(sortOrder === 'low' ? 'default' : 'low')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'low' && styles.sortBtnTextActive]}>$ Low</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'high' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder(sortOrder === 'high' ? 'default' : 'high')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'high' && styles.sortBtnTextActive]}>$ High</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={styles.gearGrid}>
-                {(positionGear[selectedPosition] || positionGear['Striker']).map((item, idx) => (
-                    <Animated.View key={item.id} entering={SlideInRight.delay(idx * 150)} style={styles.productCard}>
+                {sortedGear.map((item, idx) => (
+                    <Animated.View key={item.id} entering={SlideInRight.delay((idx % 10) * 150)} style={styles.productCard}>
                         <TouchableOpacity activeOpacity={0.9} onPress={() => setActiveProduct(item)}>
                             <View style={styles.imgWrapper}>
                                 <Image source={{ uri: item.image }} style={styles.productImg} />
@@ -853,6 +897,7 @@ const AuthUI = ({ onLogin }) => {
 
 const SearchResultsUI = ({ query }) => {
     const { sportProducts, positionGear, setActiveProduct } = React.useContext(DataContext);
+    const [sortOrder, setSortOrder] = useState('default');
 
     const allProducts = useMemo(() => {
         let products = [];
@@ -866,22 +911,53 @@ const SearchResultsUI = ({ query }) => {
         // Remove duplicates based on ID
         const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
         return uniqueProducts;
-    }, []);
+    }, [sportProducts, positionGear]);
 
-    const filtered = allProducts.filter(p =>
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        (p.brand && p.brand.toLowerCase().includes(query.toLowerCase())) ||
-        (p.tag && p.tag.toLowerCase().includes(query.toLowerCase()))
-    );
+    const sorted = useMemo(() => {
+        let products = allProducts.filter(p =>
+            p.name.toLowerCase().includes(query.toLowerCase()) ||
+            (p.brand && p.brand.toLowerCase().includes(query.toLowerCase())) ||
+            (p.tag && p.tag.toLowerCase().includes(query.toLowerCase()))
+        );
+        const getPValue = (item) => {
+            if (item.priceValue !== undefined) return item.priceValue;
+            if (typeof item.price === 'string') {
+                const val = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+                return isNaN(val) ? 0 : val;
+            }
+            return 0;
+        };
+        if (sortOrder === 'low') {
+            products.sort((a, b) => getPValue(a) - getPValue(b));
+        } else if (sortOrder === 'high') {
+            products.sort((a, b) => getPValue(b) - getPValue(a));
+        }
+        return products;
+    }, [allProducts, query, sortOrder]);
 
     return (
         <Animated.View entering={FadeIn.duration(400)} style={styles.mainContent}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <Text style={styles.sectionTitle}>SEARCH RESULTS: {filtered.length}</Text>
+                <Text style={styles.sectionTitle}>SEARCH RESULTS: {sorted.length}</Text>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'low' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder(sortOrder === 'low' ? 'default' : 'low')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'low' && styles.sortBtnTextActive]}>$ Low</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'high' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder(sortOrder === 'high' ? 'default' : 'high')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'high' && styles.sortBtnTextActive]}>$ High</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.gridContainerB}>
-                {filtered.map((item, idx) => (
+                {sorted.map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
                         <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => setActiveProduct(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
@@ -902,7 +978,7 @@ const SearchResultsUI = ({ query }) => {
                         </View>
                     </Animated.View>
                 ))}
-                {filtered.length === 0 && (
+                {sorted.length === 0 && (
                     <View style={{ flex: 1, alignItems: 'center', marginTop: 50, width: '100%' }}>
                         <Search size={40} color="#333" />
                         <Text style={{ color: '#666', marginTop: 15, fontWeight: '800' }}>NO PRODUCTS FOUND</Text>

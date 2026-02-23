@@ -802,6 +802,7 @@ const SearchResultsUI = ({ query }) => {
 
 const TrainingUI = () => {
     const [activeZone, setActiveZone] = useState('FULL BODY');
+    const [activeDrill, setActiveDrill] = useState(null);
 
     const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
 
@@ -850,6 +851,43 @@ const TrainingUI = () => {
 
     const currentData = trainingData[activeZone];
 
+    if (activeDrill) {
+        return (
+            <Animated.View entering={FadeIn.duration(400)} style={styles.drillActiveWrapper}>
+                <TouchableOpacity style={styles.drillBackWrap} onPress={() => setActiveDrill(null)}>
+                    <ChevronRight size={24} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
+                    <Text style={styles.drillBackText}>BACK TO LAB</Text>
+                </TouchableOpacity>
+
+                <View style={styles.drillPlayingCenter}>
+                    <View style={styles.drillBigIconContainer}>
+                        {React.cloneElement(activeDrill.icon, { size: 60, color: '#FF4500' })}
+                    </View>
+                    <Text style={styles.drillActiveTitle}>{activeDrill.title.toUpperCase()}</Text>
+                    <Text style={styles.drillActiveTarget}>{activeDrill.desc}</Text>
+
+                    <View style={styles.timerMockBox}>
+                        <Clock size={20} color="#FFD700" />
+                        <Text style={styles.timerMockText}>00:00</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={styles.drillCompleteBtn}
+                    onPress={() => {
+                        Alert.alert('Session Complete! 🏆', '+10 XP added to your profile.');
+                        setActiveDrill(null);
+                    }}
+                >
+                    <LinearGradient colors={['#00FF7F', '#00b359']} style={styles.drillCompleteGrad}>
+                        <Text style={styles.drillCompleteText}>FINISH DRILL</Text>
+                        <CheckCircle size={20} color="white" style={{ marginLeft: 10 }} />
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    }
+
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
             <View style={styles.arenaHeader}>
@@ -897,7 +935,7 @@ const TrainingUI = () => {
                         <Text style={styles.drillTitle}>{drill.title}</Text>
                         <Text style={styles.drillDesc}>{drill.desc}</Text>
                     </View>
-                    <TouchableOpacity style={styles.drillActionBtn} onPress={() => Alert.alert('Play Drill', `Starting ${drill.title}`)}>
+                    <TouchableOpacity style={styles.drillActionBtn} onPress={() => setActiveDrill(drill)}>
                         <ChevronRight size={18} color="#FF4500" />
                     </TouchableOpacity>
                 </View>
@@ -1275,6 +1313,19 @@ const styles = StyleSheet.create({
     drillTitle: { color: 'white', fontSize: 13, fontWeight: '800', marginBottom: 4 },
     drillDesc: { color: '#666', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
     drillActionBtn: { padding: 10, backgroundColor: '#FF450015', borderRadius: 12 },
+
+    drillActiveWrapper: { flex: 1, padding: 24, paddingTop: 40, justifyContent: 'space-between', minHeight: Dimensions.get('window').height * 0.75 },
+    drillBackWrap: { flexDirection: 'row', alignItems: 'center' },
+    drillBackText: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginLeft: 10 },
+    drillPlayingCenter: { alignItems: 'center', marginTop: 40 },
+    drillBigIconContainer: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#FF450015', justifyContent: 'center', alignItems: 'center', marginBottom: 30, borderWidth: 2, borderColor: '#FF450040' },
+    drillActiveTitle: { color: 'white', fontSize: 28, fontWeight: '900', textAlign: 'center', width: '80%' },
+    drillActiveTarget: { color: '#FF4500', fontSize: 14, fontWeight: '900', marginTop: 10, letterSpacing: 1 },
+    timerMockBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 40, borderWidth: 1, borderColor: '#222' },
+    timerMockText: { color: 'white', fontSize: 24, fontWeight: '900', marginLeft: 10, letterSpacing: 2 },
+    drillCompleteBtn: { width: '100%', borderRadius: 20, overflow: 'hidden', marginBottom: 20 },
+    drillCompleteGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
+    drillCompleteText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },
 
     homeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
     homeGreeting: { color: '#666', fontSize: 10, fontWeight: '900', letterSpacing: 1 },

@@ -101,16 +101,19 @@ const generateSmartProducts = (sportName, count) => {
         const imageId = i % cat.images.length;
         const image = cat.images[imageId];
 
-        // Ensure price ranges properly from 1000 to 45000 based on index i to give a spread
         const basePrice = 1000;
         const priceSpread = (44000 / count) * i;
         const price = Math.floor(basePrice + priceSpread + (Math.random() * 500));
+
+        // Generate a fully unique image for every generated product
+        const uniqueImage = `https://picsum.photos/seed/${sportName.replace(/\s/g, '')}${i}/400/400`;
 
         return {
             id: `${sportName.toLowerCase()}_${i}`,
             name: `${brand} ${cat.type} ${Math.floor(i / cats.length) + 1}`,
             price: `₹${price.toLocaleString('en-IN')}`,
-            image: image,
+            priceValue: price, // For easier sorting
+            image: uniqueImage,
             brand: brand
         };
     });
@@ -146,23 +149,23 @@ const sportPositions = {
 
 const positionGear = {
     'Striker': [
-        { id: 'f_st1', name: 'Elite Speed Boot', price: '₹24,995', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400', tag: 'Pure Speed' },
-        { id: 'f_st2', name: 'Flyknit Match Ball', price: '₹13,995', image: 'https://images.unsplash.com/photo-1614632537190-23e4141777db?q=80&w=400', tag: 'Top Flight' },
+        { id: 'f_st1', name: 'Elite Speed Boot', price: '₹24,995', priceValue: 24995, image: 'https://picsum.photos/seed/fst1/400/400', tag: 'Pure Speed' },
+        { id: 'f_st2', name: 'Flyknit Match Ball', price: '₹13,995', priceValue: 13995, image: 'https://picsum.photos/seed/fst2/400/400', tag: 'Top Flight' },
     ],
     'Midfielder': [
-        { id: 'f_mid1', name: 'Maestro Control Shoes', price: '₹22,995', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400', tag: 'Control' },
+        { id: 'f_mid1', name: 'Maestro Control Shoes', price: '₹22,995', priceValue: 22995, image: 'https://picsum.photos/seed/fmid1/400/400', tag: 'Control' },
     ],
     'Defender': [
-        { id: 'f_def1', name: 'Iron Wall Cleats', price: '₹19,995', image: 'https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=400', tag: 'Stability' },
+        { id: 'f_def1', name: 'Iron Wall Cleats', price: '₹19,995', priceValue: 19995, image: 'https://picsum.photos/seed/fdef1/400/400', tag: 'Stability' },
     ],
     'Goalkeeper': [
-        { id: 'f_gk1', name: 'Titan Grip Gloves', price: '₹8,995', image: 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?q=80&w=400', tag: 'High Grip' },
+        { id: 'f_gk1', name: 'Titan Grip Gloves', price: '₹8,995', priceValue: 8995, image: 'https://picsum.photos/seed/fgk1/400/400', tag: 'High Grip' },
     ],
     'Point Guard': [
-        { id: 'b_pg1', name: 'Aero Step Court', price: '₹16,499', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400', tag: 'Quick Cut' },
+        { id: 'b_pg1', name: 'Aero Step Court', price: '₹16,499', priceValue: 16499, image: 'https://picsum.photos/seed/bpg1/400/400', tag: 'Quick Cut' },
     ],
     'Batsman': [
-        { id: 'c_bat1', name: 'Willow Pro Alpha', price: '₹42,000', image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=400', tag: 'Grade 1' },
+        { id: 'c_bat1', name: 'Willow Pro Alpha', price: '₹42,000', priceValue: 42000, image: 'https://picsum.photos/seed/cbat1/400/400', tag: 'Grade 1' },
     ],
 };
 

@@ -45,7 +45,8 @@ import {
     CheckCircle,
     Clock,
     ChevronRight,
-    ShoppingCart
+    ShoppingCart,
+    Dumbbell
 } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -62,6 +63,7 @@ const { width } = Dimensions.get('window');
 export default function App() {
     const [globalData, setGlobalData] = useState(null);
     const [cart, setCart] = useState([]);
+    const [activeProduct, setActiveProduct] = useState(null);
 
     useEffect(() => {
         fetch(`${API_URL}/api/data/all`)
@@ -105,7 +107,7 @@ export default function App() {
     const clearCart = () => setCart([]);
 
     return (
-        <DataContext.Provider value={{ ...globalData, cart, addToCart, updateQty, clearCart }}>
+        <DataContext.Provider value={{ ...globalData, cart, addToCart, updateQty, clearCart, activeProduct, setActiveProduct }}>
             <SafeAreaProvider>
                 <MainApp />
             </SafeAreaProvider>
@@ -118,7 +120,8 @@ export default function App() {
  * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
  */
 const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
-    const { sports, sportProducts, addToCart } = React.useContext(DataContext);
+    const { sports, sportProducts, setActiveProduct } = React.useContext(DataContext);
+    const [sortOrder, setSortOrder] = useState('default');
 
     const banners = [
         {
@@ -214,11 +217,37 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
                 </ScrollView>
             </View>
 
-            <Text style={styles.sectionTitle}>CURATED FOR {selectedSport.toUpperCase()}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+                <Text style={styles.sectionTitle}>CURATED FOR {selectedSport.toUpperCase()}</Text>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'low' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder('low')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'low' && styles.sortBtnTextActive]}>$ Low</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.sortBtn, sortOrder === 'high' && styles.sortBtnActive]}
+                        onPress={() => setSortOrder('high')}
+                    >
+                        <Text style={[styles.sortBtnText, sortOrder === 'high' && styles.sortBtnTextActive]}>$ High</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
             <View style={styles.gridContainerB}>
-                {(sportProducts[selectedSport] || []).map((item, idx) => (
-                    <Animated.View key={item.id} entering={FadeInUp.delay(idx * 50)} style={styles.miniCardB}>
-                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => addToCart(item)}>
+                {useMemo(() => {
+                    let products = [...(sportProducts[selectedSport] || [])];
+                    if (sortOrder === 'low') {
+                        products.sort((a, b) => (a.priceValue || 0) - (b.priceValue || 0));
+                    } else if (sortOrder === 'high') {
+                        products.sort((a, b) => (b.priceValue || 0) - (a.priceValue || 0));
+                    }
+                    return products;
+                }, [sportProducts, selectedSport, sortOrder]).map((item, idx) => (
+                    <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => setActiveProduct(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
                             <View style={styles.miniBrandBadge}>
                                 <Text style={styles.miniBrandText}>{item.brand}</Text>
@@ -236,7 +265,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
 };
 
 const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSelectedPosition }) => {
-    const { sports, sportPositions, positionGear, addToCart } = React.useContext(DataContext);
+    const { sports, sportPositions, positionGear, setActiveProduct } = React.useContext(DataContext);
 
     const getPositionStats = (pos) => {
         const statsMap = {
@@ -340,7 +369,7 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
             <View style={styles.gearGrid}>
                 {(positionGear[selectedPosition] || positionGear['Striker']).map((item, idx) => (
                     <Animated.View key={item.id} entering={SlideInRight.delay(idx * 150)} style={styles.productCard}>
-                        <TouchableOpacity activeOpacity={0.9} onPress={() => addToCart(item)}>
+                        <TouchableOpacity activeOpacity={0.9} onPress={() => setActiveProduct(item)}>
                             <View style={styles.imgWrapper}>
                                 <Image source={{ uri: item.image }} style={styles.productImg} />
                                 <View style={styles.tagBadge}>
@@ -821,7 +850,7 @@ const AuthUI = ({ onLogin }) => {
 };
 
 const SearchResultsUI = ({ query }) => {
-    const { sportProducts, positionGear, addToCart } = React.useContext(DataContext);
+    const { sportProducts, positionGear, setActiveProduct } = React.useContext(DataContext);
 
     const allProducts = useMemo(() => {
         let products = [];
@@ -852,7 +881,7 @@ const SearchResultsUI = ({ query }) => {
             <View style={styles.gridContainerB}>
                 {filtered.map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
-                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => addToCart(item)}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => setActiveProduct(item)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
                             {item.brand && (
                                 <View style={styles.miniBrandBadge}>
@@ -1111,11 +1140,25 @@ const TrainingUI = ({ streak }) => {
 
 const CartUI = ({ onClose }) => {
     const { cart, updateQty, clearCart } = React.useContext(DataContext);
+    const [couponCode, setCouponCode] = useState('');
+    const [discount, setDiscount] = useState(0);
 
-    const total = cart.reduce((acc, item) => {
+    const subtotal = cart.reduce((acc, item) => {
         const p = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
         return acc + p * item.qty;
     }, 0);
+
+    // Apply $20% off for testing
+    const total = discount > 0 ? subtotal * (1 - discount) : subtotal;
+
+    const handleApplyCoupon = () => {
+        if (couponCode.toUpperCase() === 'VOLTPRO26') {
+            setDiscount(0.20);
+            Alert.alert('Coupon Applied!', '20% OFF Volt Pro 26 discount added!');
+        } else {
+            Alert.alert('Invalid Coupon', 'That coupon code does not exist.');
+        }
+    };
 
     return (
         <Animated.View entering={FadeIn.duration(400)} style={styles.cartPremiumOverlay}>
@@ -1165,10 +1208,29 @@ const CartUI = ({ onClose }) => {
                         </ScrollView>
 
                         <View style={styles.cartPremiumFooter}>
+                            <View style={styles.couponRow}>
+                                <RNTextInput
+                                    style={styles.couponInput}
+                                    placeholder="Enter Coupon Code"
+                                    placeholderTextColor="#666"
+                                    value={couponCode}
+                                    onChangeText={setCouponCode}
+                                />
+                                <TouchableOpacity style={styles.couponBtn} onPress={handleApplyCoupon}>
+                                    <Text style={styles.couponBtnText}>APPLY</Text>
+                                </TouchableOpacity>
+                            </View>
+
                             <View style={styles.cartSummaryRow}>
                                 <Text style={styles.cartSummaryLabel}>SUBTOTAL</Text>
-                                <Text style={styles.cartSummaryVal}>${total.toFixed(2)}</Text>
+                                <Text style={styles.cartSummaryVal}>${subtotal.toFixed(2)}</Text>
                             </View>
+                            {discount > 0 && (
+                                <View style={styles.cartSummaryRow}>
+                                    <Text style={styles.cartSummaryLabel}>DISCOUNT (20%)</Text>
+                                    <Text style={[styles.cartSummaryVal, { color: '#00FF7F' }]}>-${(subtotal * discount).toFixed(2)}</Text>
+                                </View>
+                            )}
                             <View style={styles.cartSummaryRow}>
                                 <Text style={styles.cartSummaryLabel}>SHIPPING (ELITE)</Text>
                                 <Text style={styles.cartSummaryVal}>FREE</Text>
@@ -1199,6 +1261,51 @@ const CartUI = ({ onClose }) => {
     );
 };
 
+const ProductDetailUI = ({ product, onClose }) => {
+    const { addToCart } = React.useContext(DataContext);
+
+    return (
+        <Animated.View entering={FadeIn.duration(300)} style={styles.prodDetailOverlay}>
+            <View style={styles.prodDetailHeader}>
+                <TouchableOpacity style={styles.prodDetailBack} onPress={onClose}>
+                    <ChevronRight size={28} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
+                </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                <View style={styles.prodDetailImgArea}>
+                    <Image source={{ uri: product.image }} style={styles.prodDetailImg} resizeMode="cover" />
+                </View>
+                <View style={styles.prodDetailInfoArea}>
+                    {product.brand && <Text style={styles.prodDetailBrand}>{product.brand.toUpperCase()}</Text>}
+                    <Text style={styles.prodDetailName}>{product.name}</Text>
+                    <Text style={styles.prodDetailPrice}>{product.price}</Text>
+
+                    <Text style={styles.prodDetailDesc}>
+                        Engineered for elite performance. Experience unprecedented stability and comfort with latest breakthrough material tech. Designed to outlast and outperform on every level.
+                    </Text>
+                </View>
+            </ScrollView>
+
+            <View style={styles.prodDetailBottomNav}>
+                <TouchableOpacity style={styles.prodDetailAddCartBtn} onPress={() => {
+                    addToCart(product);
+                }}>
+                    <Text style={styles.prodDetailAddCartText}>ADD TO CART</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.prodDetailBuyBtn} onPress={() => {
+                    addToCart(product);
+                    Alert.alert('Checkout Navigation', 'Assuming you want to buy immediate, added to cart and taking to checkout!');
+                    onClose();
+                }}>
+                    <LinearGradient colors={['#FF4500', '#FF2E00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.prodDetailBuyGrad}>
+                        <Text style={styles.prodDetailBuyText}>BUY NOW</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </View>
+        </Animated.View>
+    );
+};
+
 function MainApp() {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1210,7 +1317,7 @@ function MainApp() {
     const [showPlusMenu, setShowPlusMenu] = useState(false);
     const [showCart, setShowCart] = useState(false);
 
-    const { cart } = React.useContext(DataContext);
+    const { cart, activeProduct, setActiveProduct } = React.useContext(DataContext);
     const totalQty = cart ? cart.reduce((acc, item) => acc + item.qty, 0) : 0;
 
     const [stats, setStats] = useState({
@@ -1406,6 +1513,9 @@ function MainApp() {
                     </Animated.View>
                 </TouchableOpacity>
             )}
+
+            {activeProduct && <ProductDetailUI product={activeProduct} onClose={() => setActiveProduct(null)} />}
+            {showCart && <CartUI onClose={() => setShowCart(false)} />}
 
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)', 'black']} style={styles.bottomNavContainer}>
                 <View style={styles.bottomNav}>
@@ -1735,5 +1845,35 @@ const styles = StyleSheet.create({
     cartSummaryTotalVal: { color: '#FF4500', fontSize: 24, fontWeight: '900' },
     cartPremiumCheckoutBtn: { width: '100%', borderRadius: 25, overflow: 'hidden', marginTop: 25 },
     cartPremiumCheckGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
-    cartPremiumCheckText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 }
+    cartPremiumCheckText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },
+
+    // SHOP FILTER SETTINGS
+    sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#333' },
+    sortBtnActive: { borderColor: '#FF4500', backgroundColor: '#FF450020' },
+    sortBtnText: { color: '#888', fontSize: 10, fontWeight: '900' },
+    sortBtnTextActive: { color: '#FF4500' },
+
+    // COUPON STYLES
+    couponRow: { flexDirection: 'row', marginBottom: 20 },
+    couponInput: { flex: 1, backgroundColor: '#1a1a1a', color: 'white', padding: 12, borderRadius: 12, fontSize: 12, fontWeight: '700', borderWidth: 1, borderColor: '#333' },
+    couponBtn: { backgroundColor: '#FF4500', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, borderRadius: 12, marginLeft: 10 },
+    couponBtnText: { color: 'white', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+
+    // PRODUCT DETAIL STYLES
+    prodDetailOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#0a0a0a', zIndex: 120 },
+    prodDetailHeader: { position: 'absolute', top: 50, left: 20, zIndex: 130 },
+    prodDetailBack: { padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 },
+    prodDetailImgArea: { width: '100%', height: 450, backgroundColor: '#111' },
+    prodDetailImg: { width: '100%', height: '100%' },
+    prodDetailInfoArea: { padding: 24 },
+    prodDetailBrand: { color: '#FF4500', fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 8 },
+    prodDetailName: { color: 'white', fontSize: 26, fontWeight: '900', marginBottom: 15 },
+    prodDetailPrice: { color: '#FFD700', fontSize: 22, fontWeight: '900', marginBottom: 20 },
+    prodDetailDesc: { color: '#888', fontSize: 14, fontWeight: '600', lineHeight: 22 },
+    prodDetailBottomNav: { flexDirection: 'row', padding: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: '#222', backgroundColor: '#0a0a0a' },
+    prodDetailAddCartBtn: { flex: 1, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#333', borderRadius: 20, marginRight: 15 },
+    prodDetailAddCartText: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+    prodDetailBuyBtn: { flex: 1.5, borderRadius: 20, overflow: 'hidden' },
+    prodDetailBuyGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
+    prodDetailBuyText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 2 }
 });

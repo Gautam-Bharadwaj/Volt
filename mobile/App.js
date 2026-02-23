@@ -12,15 +12,15 @@ import {
     Animated as RNAnimated,
     Platform
 } from 'react-native';
-
-const getApiUrl = () => {
-    if (Platform.OS === 'android') return 'http://10.0.2.2:5000';
-    return 'http://10.254.202.49:5000'; // LAN IP for physical device connection
-};
-const API_URL = getApiUrl();
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io } from 'socket.io-client';
+
+const getApiUrl = () => {
+    if (Platform.OS === 'android') return 'http://10.0.2.2:5000';
+    return 'http://10.254.202.49:5000';
+};
+const API_URL = getApiUrl();
 import {
     Bell,
     Bookmark,
@@ -46,7 +46,8 @@ import {
     Clock,
     ChevronRight,
     ShoppingCart,
-    Dumbbell
+    Dumbbell,
+    LogOut
 } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -64,7 +65,6 @@ export default function App() {
     const [globalData, setGlobalData] = useState(null);
     const [cart, setCart] = useState([]);
     const [activeProduct, setActiveProduct] = useState(null);
-
     useEffect(() => {
         fetch(`${API_URL}/api/data/all`)
             .then(res => res.json())
@@ -115,10 +115,6 @@ export default function App() {
     );
 }
 
-/**
- * Main application component handling the state and navigation flow.
- * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
- */
 const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
     const { sports, sportProducts, setActiveProduct } = React.useContext(DataContext);
     const [sortOrder, setSortOrder] = useState('default');
@@ -161,9 +157,10 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
             colors: ['#4169E1', '#0000CD']
         }
     ];
+
     const scrollRef = useRef(null);
     const [currentBanner, setCurrentBanner] = useState(0);
-    const bannerWidth = width - 48; // Full width minus mainContent padding
+    const bannerWidth = width - 48;
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -312,7 +309,6 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
     }, [positionGear, selectedPosition, sortOrder]);
 
     const currentStats = getPositionStats(selectedPosition);
-
     const infiniteSports = Array(20).fill(sports).flat();
 
     return (
@@ -354,7 +350,6 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
                     ))}
                 </View>
 
-                {/* --- Intricate Position Dashboard --- */}
                 <View style={styles.posDashboard}>
                     <View style={styles.posDashHeader}>
                         <Zap size={18} color="#FFD700" />
@@ -449,10 +444,9 @@ const HomeUI = ({ stats, setStats }) => {
                 },
                 body: JSON.stringify({ level })
             });
+
             if (res.ok) {
                 const data = await res.json();
-
-                // Update local stats from backend response
                 setStats(prev => ({
                     ...prev,
                     score: data.profile.fitnessScore,
@@ -555,13 +549,11 @@ const ArenaUI = () => {
     const [tournaments, setTournaments] = useState([]);
 
     useEffect(() => {
-        // Fallback fetch
         fetch(`${API_URL}/api/arena/tournaments`)
             .then(res => res.json())
             .then(data => setTournaments(data))
             .catch(console.error);
 
-        // Real-time Socket.io Connection
         const socket = io(API_URL);
         socket.on('arenaUpdate', (liveData) => {
             setTournaments(liveData);
@@ -705,96 +697,78 @@ const ArenaUI = () => {
     );
 };
 
-const ProfileUI = ({ stats, onLogout }) => {
-    const xpPercentage = Math.min(100, Math.max(0, (stats.xp / stats.maxXp) * 100));
-
+const ProfileUI = ({ stats, handleLogout }) => {
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-            <View style={styles.profileHeroEnhanced}>
-                <View style={styles.avatarWrapperAbs}>
-                    <LinearGradient colors={['#FF416C', '#FF4B2B']} style={styles.avatarRing}>
-                        <View style={styles.avatarInner}>
-                            <User size={50} color="white" />
-                        </View>
-                    </LinearGradient>
-                    <View style={styles.verifiedBadge}>
-                        <Zap size={10} color="black" fill="black" />
+            <View style={styles.profileHeaderAlt}>
+                <View style={styles.profileInfoAlt}>
+                    <View style={styles.profilePicBox}>
+                        <User size={30} color="white" />
+                        <View style={styles.onlineStatus} />
                     </View>
-                </View>
-                <Text style={styles.pName}>{stats.name}</Text>
-                <View style={styles.lvlBadge}>
-                    <Star size={12} color="#FFD700" fill="#FFD700" />
-                    <Text style={styles.lvlText}>GOLD ATHLETE • LEVEL {stats.level}</Text>
-                </View>
-
-                <View style={styles.progressSection}>
-                    <View style={styles.progressTextRow}>
-                        <Text style={styles.progressLabel}>NEXT RANK: MASTER</Text>
-                        <Text style={styles.progressPercent}>{stats.xp}/{stats.maxXp} XP</Text>
-                    </View>
-                    <View style={styles.progressBarBg}>
-                        <LinearGradient
-                            colors={['#FF4500', '#FF8C00']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={[styles.progressBarFill, { width: `${xpPercentage}%` }]}
-                        />
-                    </View>
-                </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>PRESTIGE AWARDS</Text>
-            <View style={styles.achievementRow}>
-                {[
-                    { icon: <Zap size={20} color="#FFD700" />, label: 'Fastest' },
-                    { icon: <Shield size={20} color="#4169E1" />, label: 'Defender' },
-                    { icon: <Award size={20} color="#FF4500" />, label: 'Champion' }
-                ].map((item, i) => (
-                    <View key={i} style={styles.attainBox}>
-                        <View style={styles.attainIconCirc}>{item.icon}</View>
-                        <Text style={styles.attainLabel}>{item.label.toUpperCase()}</Text>
-                    </View>
-                ))}
-            </View>
-
-            <Text style={styles.sectionTitle}>RECENT ACTIVITY</Text>
-            <View style={styles.activityTimeline}>
-                {[
-                    { title: 'Purchased Elite Cleats', date: 'Yesterday', icon: <ShoppingBag size={14} color="#FF4500" /> },
-                    { title: 'New Personal Record', date: '2 days ago', icon: <Activity size={14} color="#00FF7F" /> },
-                    { title: 'Joined Summer Cup', date: '3 days ago', icon: <Trophy size={14} color="#FFD700" /> }
-                ].map((item, i) => (
-                    <View key={i} style={styles.timelineItem}>
-                        <View style={styles.timelineIcon}>{item.icon}</View>
-                        <View style={styles.timelineContent}>
-                            <Text style={styles.timelineTitle}>{item.title}</Text>
-                            <Text style={styles.timelineDate}>{item.date}</Text>
+                    <View style={{ marginLeft: 20 }}>
+                        <Text style={styles.profileNameAlt}>{stats.name.toUpperCase()}</Text>
+                        <View style={styles.levelRow}>
+                            <Zap size={12} color="#FFD700" />
+                            <Text style={styles.levelLabelAlt}>LEVEL {stats.level} ELITE</Text>
                         </View>
                     </View>
-                ))}
-            </View>
-
-            <View style={styles.profileMenu}>
-                {[
-                    { label: 'MY GEAR COLLECTION', icon: <ShoppingBag size={18} color="#666" /> },
-                    { label: 'PERFORMANCE ARCHIVE', icon: <Activity size={18} color="#666" /> },
-                    { label: 'TEAM MANAGER', icon: <Grid size={18} color="#666" /> },
-                    { label: 'APP SETTINGS', icon: <Star size={18} color="#666" /> }
-                ].map((item, i) => (
-                    <TouchableOpacity key={i} style={styles.menuRow} onPress={() => Alert.alert(item.label, 'Opening ' + item.label + '...')}>
-                        <View style={styles.menuIconBox}>{item.icon}</View>
-                        <Text style={styles.menuRowText}>{item.label}</Text>
-                        <Zap size={14} color="#333" />
-                    </TouchableOpacity>
-                ))}
-
-                <TouchableOpacity style={[styles.menuRow, { borderColor: '#FF450040', marginTop: 20 }]} onPress={onLogout}>
-                    <View style={[styles.menuIconBox, { backgroundColor: '#FF450015' }]}>
-                        <User size={18} color="#FF4500" />
-                    </View>
-                    <Text style={[styles.menuRowText, { color: '#FF4500' }]}>LOGOUT</Text>
+                </View>
+                <TouchableOpacity style={styles.settingsBtn} onPress={handleLogout}>
+                    <Text style={styles.settingsBtnText}>LOGOUT</Text>
                 </TouchableOpacity>
             </View>
+
+            <View style={styles.xpBoxAlt}>
+                <View style={styles.xpTextRow}>
+                    <Text style={styles.xpLabelAlt}>GLOBAL RANK XP</Text>
+                    <Text style={styles.xpValAlt}>{stats.xp} / {stats.maxXp}</Text>
+                </View>
+                <View style={styles.xpBarBgAlt}>
+                    <LinearGradient
+                        colors={['#FF4500', '#FF8C00']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.xpBarFillAlt, { width: `${(stats.xp / stats.maxXp) * 100}%` }]}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.statGridAlt}>
+                {[
+                    { label: 'CALORIES', val: stats.calories, icon: <Activity size={16} color="#FF4500" /> },
+                    { label: 'SQUAD', val: 'ALPHA', icon: <Shield size={16} color="#4169E1" /> },
+                    { label: 'TROPHIES', val: '12', icon: <Trophy size={16} color="#FFD700" /> },
+                    { label: 'STREAK', val: `${stats.streak}D`, icon: <Flame size={16} color="#FF8C00" /> }
+                ].map((item, i) => (
+                    <View key={i} style={styles.statCardAlt}>
+                        {item.icon}
+                        <Text style={styles.statValAlt}>{item.val}</Text>
+                        <Text style={styles.statLabAlt}>{item.label}</Text>
+                    </View>
+                ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>MY ACHIEVEMENTS</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+                {[
+                    { title: 'EARLY BIRD', color: '#FFD700' },
+                    { title: 'STREAK MASTER', color: '#FF4500' },
+                    { title: 'VOLT ELITE', color: '#4169E1' },
+                    { title: 'GEAR HEAD', color: '#00FF7F' }
+                ].map((ach, i) => (
+                    <View key={i} style={styles.achieveCard}>
+                        <Award size={24} color={ach.color} />
+                        <Text style={styles.achieveTitle}>{ach.title}</Text>
+                    </View>
+                ))}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.vaultEntry} onPress={() => Alert.alert('Vault', 'Access encrypted Gear Vault?')}>
+                <Shield size={20} color="#666" />
+                <Text style={styles.vaultText}>ACCESS SECURE GEAR VAULT</Text>
+                <ChevronRight size={18} color="#666" />
+            </TouchableOpacity>
         </Animated.View>
     );
 };
@@ -908,7 +882,6 @@ const SearchResultsUI = ({ query }) => {
             products = [...products, ...arr];
         });
 
-        // Remove duplicates based on ID
         const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
         return uniqueProducts;
     }, [sportProducts, positionGear]);
@@ -939,7 +912,6 @@ const SearchResultsUI = ({ query }) => {
         <Animated.View entering={FadeIn.duration(400)} style={styles.mainContent}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <Text style={styles.sectionTitle}>SEARCH RESULTS: {sorted.length}</Text>
-
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                     <TouchableOpacity
                         style={[styles.sortBtn, sortOrder === 'low' && styles.sortBtnActive]}
@@ -992,20 +964,20 @@ const SearchResultsUI = ({ query }) => {
 const TrainingUI = ({ streak }) => {
     const [activeZone, setActiveZone] = useState('FULL BODY');
     const [activeDrill, setActiveDrill] = useState(null);
-    const [timerState, setTimerState] = useState('IDLE'); // IDLE, RUNNING, PAUSED
+    const [timerState, setTimerState] = useState('IDLE');
     const [elapsed, setElapsed] = useState(0);
     const [showCalendar, setShowCalendar] = useState(false);
 
     const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
 
     useEffect(() => {
-        let idx;
+        let interval;
         if (timerState === 'RUNNING') {
-            idx = setInterval(() => {
+            interval = setInterval(() => {
                 setElapsed(prev => prev + 1);
             }, 1000);
         }
-        return () => clearInterval(idx);
+        return () => clearInterval(interval);
     }, [timerState]);
 
     useEffect(() => {
@@ -1173,7 +1145,7 @@ const TrainingUI = ({ streak }) => {
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.arenaTabs}>
-                {zones.map((zone, idx) => (
+                {zones.map((zone) => (
                     <TouchableOpacity key={zone} style={[styles.arenaTab, activeZone === zone && styles.arenaTabActive]} onPress={() => setActiveZone(zone)}>
                         <Text style={[styles.arenaTabText, activeZone === zone && styles.arenaTabTextActive]}>{zone}</Text>
                     </TouchableOpacity>
@@ -1227,7 +1199,6 @@ const CartUI = ({ onClose }) => {
         return acc + p * item.qty;
     }, 0);
 
-    // Apply $20% off for testing
     const total = discount > 0 ? subtotal * (1 - discount) : subtotal;
 
     const handleApplyCoupon = () => {
@@ -1366,9 +1337,7 @@ const ProductDetailUI = ({ product, onClose }) => {
             </ScrollView>
 
             <View style={styles.prodDetailBottomNav}>
-                <TouchableOpacity style={styles.prodDetailAddCartBtn} onPress={() => {
-                    addToCart(product);
-                }}>
+                <TouchableOpacity style={styles.prodDetailAddCartBtn} onPress={() => addToCart(product)}>
                     <Text style={styles.prodDetailAddCartText}>ADD TO CART</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.prodDetailBuyBtn} onPress={() => {
@@ -1385,8 +1354,143 @@ const ProductDetailUI = ({ product, onClose }) => {
     );
 };
 
-function MainApp() {
+const OnboardingUI = ({ onComplete }) => {
+    const [step, setStep] = useState(0);
+    const slides = [
+        {
+            subtitle: "INTRODUCING VOLT",
+            title: "Performance Tracking",
+            desc: "Monitor your athletic progress with real-time biometric analysis and milestone tracking to reach peak performance.",
+            colors: ['#FF4500', '#FF8C00']
+        },
+        {
+            subtitle: "ELITE EQUIPMENT",
+            title: "Pro Tier Gear",
+            desc: "Access exclusive elite equipment curated by pro athletes to enhance your discipline and results.",
+            colors: ['#4169E1', '#0000CD']
+        },
+        {
+            subtitle: "GLOBAL ARENA",
+            title: "Compete Digitally",
+            desc: "Join tournaments, form squads, and dominate the leaderboard in the most advanced sports ecosystem.",
+            colors: ['#FFD700', '#FFA500']
+        }
+    ];
 
+    const current = slides[step];
+
+    return (
+        <View style={styles.obContainer}>
+            <StatusBar style="light" />
+            <View style={styles.obAppMockArea}>
+                <Animated.View
+                    key={step}
+                    entering={FadeIn.duration(600)}
+                    style={[styles.obPhoneFrame, { borderColor: current.colors[0] + '30' }]}
+                >
+                    <View style={styles.obPhoneScreen}>
+                        <View style={styles.mockInnerHeader}>
+                            <View style={{ width: 40, height: 4, backgroundColor: '#333', borderRadius: 2, alignSelf: 'center', marginBottom: 15 }} />
+                        </View>
+
+                        {step === 0 && (
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.mockSub}>ACTIVITY</Text>
+                                <View style={styles.mockCard}>
+                                    <Activity size={16} color="#FF4500" />
+                                    <View style={{ marginLeft: 10 }}>
+                                        <Text style={styles.mockCardTitle}>Heart Rate</Text>
+                                        <Text style={styles.mockCardSub}>142 BPM • PEAK</Text>
+                                    </View>
+                                </View>
+                                <View style={[styles.mockCard, { marginTop: 10 }]}>
+                                    <Zap size={16} color="#FFD700" />
+                                    <View style={{ marginLeft: 10 }}>
+                                        <Text style={styles.mockCardTitle}>Energy Level</Text>
+                                        <Text style={styles.mockCardSub}>85% • RECHARGING</Text>
+                                    </View>
+                                </View>
+                                <View style={{ marginTop: 20, height: 100, backgroundColor: '#111', borderRadius: 15, padding: 15 }}>
+                                    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'flex-end', height: '100%' }}>
+                                        {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
+                                            <View key={i} style={{ flex: 1, height: `${h}%`, backgroundColor: i === 3 ? '#FF4500' : '#333', borderRadius: 4 }} />
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+
+                        {step === 1 && (
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.mockSub}>SHOP ELITE</Text>
+                                <View style={{ flexDirection: 'row', gap: 10 }}>
+                                    <View style={{ flex: 1, height: 120, backgroundColor: '#111', borderRadius: 15, padding: 10 }}>
+                                        <View style={{ width: '100%', height: '60%', backgroundColor: '#1a1a1a', borderRadius: 10 }} />
+                                        <View style={{ width: '80%', height: 8, backgroundColor: '#333', marginTop: 10, borderRadius: 4 }} />
+                                        <View style={{ width: '40%', height: 8, backgroundColor: '#FF4500', marginTop: 5, borderRadius: 4 }} />
+                                    </View>
+                                    <View style={{ flex: 1, height: 120, backgroundColor: '#111', borderRadius: 15, padding: 10 }}>
+                                        <View style={{ width: '100%', height: '60%', backgroundColor: '#1a1a1a', borderRadius: 10 }} />
+                                        <View style={{ width: '80%', height: 8, backgroundColor: '#333', marginTop: 10, borderRadius: 4 }} />
+                                        <View style={{ width: '40%', height: 8, backgroundColor: '#FF4500', marginTop: 5, borderRadius: 4 }} />
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+
+                        {step === 2 && (
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.mockSub}>ARENA RANKING</Text>
+                                {[1, 2, 3].map((item) => (
+                                    <View key={item} style={[styles.mockCard, { marginBottom: 10 }]}>
+                                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: item === 1 ? '#FFD700' : '#1a1a1a', justifyContent: 'center', alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 10, color: item === 1 ? 'black' : 'white', fontWeight: '900' }}>{item}</Text>
+                                        </View>
+                                        <View style={{ marginLeft: 10 }}>
+                                            <Text style={styles.mockCardTitle}>{item === 1 ? 'Gautam B.' : 'User_' + item}</Text>
+                                            <Text style={styles.mockCardSub}>{12000 - item * 500} pts</Text>
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+                </Animated.View>
+            </View>
+
+            <View style={styles.obContentArea}>
+                <Text style={[styles.obSubtitle, { color: current.colors[0] }]}>{current.subtitle}</Text>
+                <Text style={styles.obTitle}>{current.title}</Text>
+                <Text style={styles.obDesc}>{current.desc}</Text>
+
+                <View style={styles.obDotsRow}>
+                    {slides.map((_, i) => (
+                        <View key={i} style={[styles.obDot, step === i && styles.obDotActive]} />
+                    ))}
+                </View>
+
+                <TouchableOpacity
+                    style={styles.obMainBtn}
+                    onPress={() => {
+                        if (step < slides.length - 1) setStep(step + 1);
+                        else onComplete();
+                    }}
+                >
+                    <LinearGradient
+                        colors={['#FF4500', '#FF2E00']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.obMainBtn, { shadowColor: '#FF4500' }]}
+                    >
+                        <Text style={styles.obMainBtnText}>{step === slides.length - 1 ? 'GET STARTED' : 'CONTINUE'}</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
+
+function MainApp() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [activeTab, setActiveTab] = useState('Home');
     const [activeMode, setActiveMode] = useState('Beginner');
@@ -1394,7 +1498,13 @@ function MainApp() {
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
     const [showPlusMenu, setShowPlusMenu] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
     const [showCart, setShowCart] = useState(false);
+
+    const completeOnboarding = async () => {
+        await AsyncStorage.setItem('hasBoarded', 'true');
+        setShowOnboarding(false);
+    };
 
     const { cart, activeProduct, setActiveProduct } = React.useContext(DataContext);
     const totalQty = cart ? cart.reduce((acc, item) => acc + item.qty, 0) : 0;
@@ -1438,6 +1548,16 @@ function MainApp() {
             }
         };
         fetchProfile();
+    }, []);
+
+    useEffect(() => {
+        const checkBoarding = async () => {
+            const hasBoarded = await AsyncStorage.getItem('hasBoarded');
+            if (hasBoarded !== 'true') {
+                setShowOnboarding(true);
+            }
+        };
+        checkBoarding();
     }, []);
 
     const handleLoginSuccess = (profile) => {
@@ -1566,7 +1686,7 @@ function MainApp() {
                         )}
                         {activeTab === 'Arena' && <ArenaUI />}
                         {activeTab === 'Training' && <TrainingUI streak={stats.streak} />}
-                        {activeTab === 'Profile' && <ProfileUI stats={stats} onLogout={handleLogout} />}
+                        {activeTab === 'Profile' && <ProfileUI stats={stats} handleLogout={handleLogout} />}
                     </>
                 )}
             </ScrollView>
@@ -1590,6 +1710,7 @@ function MainApp() {
                 </TouchableOpacity>
             )}
 
+            {showOnboarding && <OnboardingUI onComplete={completeOnboarding} />}
             {activeProduct && <ProductDetailUI product={activeProduct} onClose={() => setActiveProduct(null)} />}
             {showCart && <CartUI onClose={() => setShowCart(false)} />}
 
@@ -1735,9 +1856,62 @@ const styles = StyleSheet.create({
 
     bottomNavContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
     bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingTop: 30, paddingHorizontal: 20 },
-    navTab: { alignItems: 'center', width: 60 },
+    navTab: { alignItems: 'center', width: 60, justifyContent: 'center' },
     navText: { fontSize: 9, fontWeight: '900', marginTop: 6, letterSpacing: 1 },
 
+    obContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'black', paddingHorizontal: 24, paddingTop: 60, zIndex: 1000 },
+    obAppMockArea: { flex: 0.6, justifyContent: 'center', alignItems: 'center' },
+    obPhoneFrame: {
+        width: width * 0.7,
+        height: width * 1.3,
+        backgroundColor: '#0a0a0a',
+        borderRadius: 40,
+        borderWidth: 8,
+        borderColor: '#1a1a1a',
+        padding: 16,
+        shadowColor: '#FF4500',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20
+    },
+    obPhoneScreen: { flex: 1, backgroundColor: '#000', borderRadius: 24, padding: 12 },
+    mockInnerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    mockHeaderText: { color: 'white', fontSize: 18, fontWeight: '800' },
+    mockHeaderUser: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' },
+    mockSub: { color: '#666', fontSize: 10, fontWeight: '700', marginBottom: 8, marginTop: 10, textTransform: 'uppercase', letterSpacing: 1 },
+    mockCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#0a0a0a',
+        padding: 10,
+        borderRadius: 12,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: '#111'
+    },
+    mockCardIcon: { width: 28, height: 28, backgroundColor: '#111', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+    mockCardTitle: { color: 'white', fontSize: 12, fontWeight: '700' },
+    mockCardSub: { color: '#444', fontSize: 9 },
+
+    obContentArea: { flex: 0.4, alignItems: 'center', paddingBottom: 40, width: '100%' },
+    obSubtitle: { color: '#888', fontSize: 12, fontWeight: '900', marginBottom: 10, letterSpacing: 2 },
+    obTitle: { color: 'white', fontSize: 34, fontWeight: '900', textAlign: 'center', marginBottom: 15, letterSpacing: -1 },
+    obDesc: { color: '#888', fontSize: 14, textAlign: 'center', lineHeight: 22, paddingHorizontal: 20, marginBottom: 35, fontWeight: '600' },
+    obDotsRow: { flexDirection: 'row', marginBottom: 35 },
+    obDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#222', marginHorizontal: 5 },
+    obDotActive: { backgroundColor: 'white', width: 24 },
+    obMainBtn: {
+        width: '100%',
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        elevation: 10
+    },
+    obMainBtnText: { color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 1.5 },
     fabWrapper: { alignItems: 'center', justifyContent: 'center', width: 60 },
     fabBtn: { width: 56, height: 56, borderRadius: 28, overflow: 'hidden', marginTop: -35, borderWidth: 3, borderColor: '#0a0a0a' },
     fabGrad: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -1889,7 +2063,6 @@ const styles = StyleSheet.create({
     authToggleClick: { marginTop: 25, alignItems: 'center' },
     authToggleLabel: { color: '#888', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
 
-    // PREMIUM CART STYLES
     cartBadgeNumWrap: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FF4500', width: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
     cartBadgeNumText: { color: 'white', fontSize: 9, fontWeight: '900' },
     cartPremiumOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#0a0a0a', zIndex: 100 },
@@ -1923,19 +2096,16 @@ const styles = StyleSheet.create({
     cartPremiumCheckGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
     cartPremiumCheckText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 },
 
-    // SHOP FILTER SETTINGS
     sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#333' },
     sortBtnActive: { borderColor: '#FF4500', backgroundColor: '#FF450020' },
     sortBtnText: { color: '#888', fontSize: 10, fontWeight: '900' },
     sortBtnTextActive: { color: '#FF4500' },
 
-    // COUPON STYLES
     couponRow: { flexDirection: 'row', marginBottom: 20 },
     couponInput: { flex: 1, backgroundColor: '#1a1a1a', color: 'white', padding: 12, borderRadius: 12, fontSize: 12, fontWeight: '700', borderWidth: 1, borderColor: '#333' },
     couponBtn: { backgroundColor: '#FF4500', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, borderRadius: 12, marginLeft: 10 },
     couponBtnText: { color: 'white', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
 
-    // PRODUCT DETAIL STYLES
     prodDetailOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#0a0a0a', zIndex: 120 },
     prodDetailHeader: { position: 'absolute', top: 50, left: 20, zIndex: 130 },
     prodDetailBack: { padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 },
@@ -1951,5 +2121,29 @@ const styles = StyleSheet.create({
     prodDetailAddCartText: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
     prodDetailBuyBtn: { flex: 1.5, borderRadius: 20, overflow: 'hidden' },
     prodDetailBuyGrad: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18 },
-    prodDetailBuyText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 2 }
+    prodDetailBuyText: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 2 },
+
+    profileHeaderAlt: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, backgroundColor: '#111', padding: 20, borderRadius: 30, borderWidth: 1, borderColor: '#1a1a1a' },
+    profileInfoAlt: { flexDirection: 'row', alignItems: 'center' },
+    profilePicBox: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#1a1a1a', justifyContent: 'center', alignItems: 'center', position: 'relative' },
+    onlineStatus: { position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, borderRadius: 7, backgroundColor: '#00FF7F', borderWidth: 2, borderColor: '#111' },
+    profileNameAlt: { color: 'white', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+    levelRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+    levelLabelAlt: { color: '#FFD700', fontSize: 10, fontWeight: '900', marginLeft: 6, letterSpacing: 1 },
+    settingsBtn: { backgroundColor: '#1a1a1a', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#333' },
+    settingsBtnText: { color: '#888', fontSize: 10, fontWeight: '900' },
+    xpBoxAlt: { backgroundColor: '#111', padding: 24, borderRadius: 30, marginBottom: 24, borderWidth: 1, borderColor: '#1a1a1a' },
+    xpTextRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+    xpLabelAlt: { color: '#666', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+    xpValAlt: { color: 'white', fontSize: 11, fontWeight: '900' },
+    xpBarBgAlt: { height: 8, backgroundColor: '#000', borderRadius: 4, overflow: 'hidden' },
+    xpBarFillAlt: { height: '100%', borderRadius: 4 },
+    statGridAlt: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 30 },
+    statCardAlt: { width: '48%', backgroundColor: '#111', padding: 20, borderRadius: 25, marginBottom: 15, alignItems: 'center', borderWidth: 1, borderColor: '#1a1a1a' },
+    statValAlt: { color: 'white', fontSize: 20, fontWeight: '900', marginTop: 10 },
+    statLabAlt: { color: '#666', fontSize: 9, fontWeight: '900', marginTop: 4, letterSpacing: 1 },
+    achieveCard: { width: 120, height: 120, backgroundColor: '#111', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15, borderWidth: 1, borderColor: '#1a1a1a' },
+    achieveTitle: { color: 'white', fontSize: 9, fontWeight: '900', marginTop: 12, textAlign: 'center', paddingHorizontal: 10 },
+    vaultEntry: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: '#1a1a1a', marginBottom: 30 },
+    vaultText: { flex: 1, color: '#888', fontSize: 11, fontWeight: '900', marginLeft: 15, letterSpacing: 1 }
 });

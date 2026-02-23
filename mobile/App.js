@@ -816,6 +816,7 @@ function MainApp() {
     const [selectedSport, setSelectedSport] = useState('Football');
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPlusMenu, setShowPlusMenu] = useState(false);
 
     const [stats, setStats] = useState({
         score: 0,
@@ -981,12 +982,43 @@ function MainApp() {
                 )}
             </ScrollView>
 
+            {showPlusMenu && (
+                <TouchableOpacity
+                    style={styles.plusMenuOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowPlusMenu(false)}
+                >
+                    <Animated.View entering={FadeInUp.duration(300)} style={styles.plusMenuPopup}>
+                        <TouchableOpacity style={styles.plusMenuItem} onPress={() => { setActiveTab('Arena'); setShowPlusMenu(false); }}>
+                            <View style={styles.plusMenuIconArea}><Trophy size={20} color="#FFD700" /></View>
+                            <Text style={styles.plusMenuLabel}>ARENA</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.plusMenuItem} onPress={() => { setActiveTab('Training'); setShowPlusMenu(false); }}>
+                            <View style={styles.plusMenuIconArea}><Dumbbell size={20} color="#4169E1" /></View>
+                            <Text style={styles.plusMenuLabel}>TRAINING</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </TouchableOpacity>
+            )}
+
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)', 'black']} style={styles.bottomNavContainer}>
                 <View style={styles.bottomNav}>
-                    <NavTab icon={<Home size={24} />} label="HOME" active={activeTab === 'Home'} onPress={() => setActiveTab('Home')} />
-                    <NavTab icon={<ShoppingBag size={24} />} label="SHOP" active={activeTab === 'Shop'} onPress={() => setActiveTab('Shop')} />
-                    <NavTab icon={<Trophy size={24} />} label="ARENA" active={activeTab === 'Arena'} onPress={() => setActiveTab('Arena')} />
-                    <NavTab icon={<User size={24} />} label="PROFILE" active={activeTab === 'Profile'} onPress={() => setActiveTab('Profile')} />
+                    <NavTab icon={<Home size={24} />} label="HOME" active={activeTab === 'Home'} onPress={() => { setActiveTab('Home'); setShowPlusMenu(false); }} />
+                    <NavTab icon={<ShoppingBag size={24} />} label="SHOP" active={activeTab === 'Shop'} onPress={() => { setActiveTab('Shop'); setShowPlusMenu(false); }} />
+
+                    <View style={styles.fabWrapper}>
+                        <TouchableOpacity
+                            style={styles.fabBtn}
+                            onPress={() => setShowPlusMenu(!showPlusMenu)}
+                            activeOpacity={0.8}
+                        >
+                            <LinearGradient colors={showPlusMenu ? ['#333', '#111'] : ['#FF4500', '#FF2E00']} style={styles.fabGrad}>
+                                {showPlusMenu ? <X size={24} color="white" /> : <Plus size={24} color="white" />}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+
+                    <NavTab icon={<User size={24} />} label="PROFILE" active={activeTab === 'Profile'} onPress={() => { setActiveTab('Profile'); setShowPlusMenu(false); }} />
                 </View>
             </LinearGradient>
         </View>
@@ -1106,9 +1138,19 @@ const styles = StyleSheet.create({
     productPriceP: { color: '#FF4500', fontSize: 14, fontWeight: '900', marginTop: 2 },
 
     bottomNavContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
-    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingTop: 30 },
-    navTab: { alignItems: 'center' },
+    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingTop: 30, paddingHorizontal: 20 },
+    navTab: { alignItems: 'center', width: 60 },
     navText: { fontSize: 9, fontWeight: '900', marginTop: 6, letterSpacing: 1 },
+
+    fabWrapper: { alignItems: 'center', justifyContent: 'center', width: 60 },
+    fabBtn: { width: 56, height: 56, borderRadius: 28, overflow: 'hidden', marginTop: -35, borderWidth: 3, borderColor: '#0a0a0a' },
+    fabGrad: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+    plusMenuOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 10 },
+    plusMenuPopup: { width: 140, backgroundColor: '#111', borderRadius: 20, padding: 10, marginBottom: 110, borderWidth: 1, borderColor: '#222', alignItems: 'center' },
+    plusMenuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 15, width: '100%', borderRadius: 12 },
+    plusMenuIconArea: { marginRight: 10 },
+    plusMenuLabel: { color: 'white', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
 
     statHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
     statTitle: { color: 'white', fontSize: 18, fontWeight: '900', letterSpacing: 1 },

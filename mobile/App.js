@@ -825,6 +825,25 @@ const TrainingUI = () => {
                 ))}
             </ScrollView>
 
+            <Text style={styles.sectionTitle}>SESSION OF THE DAY</Text>
+            <TouchableOpacity style={styles.trainHeroCard} onPress={() => Alert.alert('Start Session', 'Loading Upper Body Blast...')}>
+                <LinearGradient colors={['#FF450020', '#111']} style={styles.trainHeroGrad}>
+                    <View style={styles.trainHeroHeader}>
+                        <View style={styles.trainTagBadge}>
+                            <Text style={styles.trainTagText}>INTENSE</Text>
+                        </View>
+                        <Text style={styles.trainDuration}>45 MINS</Text>
+                    </View>
+                    <Text style={styles.trainHeroTitle}>UPPER BODY BLAST</Text>
+                    <View style={styles.trainHeroFooter}>
+                        <Text style={styles.trainHeroSub}>Chest, Shoulders & Triceps</Text>
+                        <View style={styles.playBtnCirc}>
+                            <Play size={16} color="black" fill="black" />
+                        </View>
+                    </View>
+                </LinearGradient>
+            </TouchableOpacity>
+
         </Animated.View>
     );
 };
@@ -1179,6 +1198,17 @@ const styles = StyleSheet.create({
     statBox: { width: '48%', backgroundColor: '#111', padding: 20, borderRadius: 25, borderWidth: 1, borderColor: '#222' },
     statVal: { color: '#FF4500', fontSize: 24, fontWeight: '900' },
     statLab: { color: '#666', fontSize: 10, fontWeight: '800', marginTop: 5 },
+
+    trainHeroCard: { borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: '#FF450050', marginBottom: 35 },
+    trainHeroGrad: { padding: 24, minHeight: 180, justifyContent: 'space-between' },
+    trainHeroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    trainTagBadge: { backgroundColor: '#FF4500', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+    trainTagText: { color: 'white', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+    trainDuration: { color: '#FF4500', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+    trainHeroTitle: { color: 'white', fontSize: 26, fontWeight: '900', width: '70%', marginTop: 20 },
+    trainHeroFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 15 },
+    trainHeroSub: { color: '#888', fontSize: 11, fontWeight: '700' },
+    playBtnCirc: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FF4500', justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
 
     homeTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
     homeGreeting: { color: '#666', fontSize: 10, fontWeight: '900', letterSpacing: 1 },

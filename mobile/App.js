@@ -1503,9 +1503,6 @@ function MainApp() {
                         <TouchableOpacity style={styles.topIconBtn} onPress={() => Alert.alert('Notifications', 'Your gear is on its way!')}>
                             <Bell size={24} color="white" />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.topIconBtn} onPress={() => setActiveTab('Profile')}>
-                            <User size={24} color="white" />
-                        </TouchableOpacity>
                     </View>
                 </View>
 

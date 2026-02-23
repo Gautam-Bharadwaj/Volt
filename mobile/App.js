@@ -1,3 +1,4 @@
+/** VOLT MOBILE APP - GLOBAL CORE **/
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     TextInput as RNTextInput,

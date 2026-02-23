@@ -5,7 +5,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User } = require('./db');
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'volt_secret_key_123'; // In production, move to .env
 
@@ -183,17 +189,30 @@ app.get('/api/data/all', (req, res) => {
     res.status(200).json({ sports, sportProducts, sportPositions, positionGear });
 });
 
-// Arena Data
+// Dynamic Arena Data (WebSockets)
+let tournaments = [
+    { id: 1, name: 'Elite Champions League', prize: '₹2,50,000', players: '4.2k', tag: 'LIVE', viewers: 12800 },
+    { id: 2, name: 'Volt Summer Splashdown', prize: '₹50,000', players: '1.8k', tag: 'LIVE', viewers: 5400 },
+    { id: 3, name: 'Warrior Street Series', prize: '₹80,000', players: '890', tag: 'STARTING', viewers: 0 },
+    { id: 4, name: 'Winter Showdown', prize: '₹1,00,000', players: '1.2k', tag: 'UPCOMING', viewers: 0 }
+];
+
+io.on('connection', (socket) => {
+    socket.emit('arenaUpdate', tournaments);
+});
+
+// Simulate Live Audience Fluctuation
+setInterval(() => {
+    tournaments[0].viewers += Math.floor(Math.random() * 21) - 5;
+    tournaments[1].viewers += Math.floor(Math.random() * 11) - 2;
+    io.emit('arenaUpdate', tournaments);
+}, 3000);
+
 app.get('/api/arena/tournaments', (req, res) => {
-    res.status(200).json([
-        { id: 1, name: 'Elite Champions League', prize: '₹2,50,000', players: '4.2k', tag: 'LIVE', viewers: '12.8k' },
-        { id: 2, name: 'Volt Summer Splashdown', prize: '₹50,000', players: '1.8k', tag: 'LIVE', viewers: '5.4k' },
-        { id: 3, name: 'Warrior Street Series', prize: '₹80,000', players: '890', tag: 'STARTING', viewers: '0' },
-        { id: 4, name: 'Winter Showdown', prize: '₹1,00,000', players: '1.2k', tag: 'UPCOMING', viewers: '0' }
-    ]);
+    res.status(200).json(tournaments);
 });
 
 // Start Server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Volt Backend Server running on http://0.0.0.0:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Volt Backend Server running on http://0.0.0.0:${PORT} with WebSockets ⚡`);
 });

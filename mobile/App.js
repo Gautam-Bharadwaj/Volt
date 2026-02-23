@@ -20,6 +20,7 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { io } from 'socket.io-client';
 import {
     Bell,
     Bookmark,
@@ -449,10 +450,21 @@ const ArenaUI = () => {
     const [tournaments, setTournaments] = useState([]);
 
     useEffect(() => {
+        // Fallback fetch
         fetch(`${API_URL}/api/arena/tournaments`)
             .then(res => res.json())
             .then(data => setTournaments(data))
             .catch(console.error);
+
+        // Real-time Socket.io Connection
+        const socket = io(API_URL);
+        socket.on('arenaUpdate', (liveData) => {
+            setTournaments(liveData);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     return (

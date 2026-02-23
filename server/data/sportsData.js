@@ -97,7 +97,6 @@ const generateSmartProducts = (sportName, count) => {
     return Array.from({ length: count }, (_, i) => {
         const cat = cats[i % cats.length];
         const brand = sportBrands[i % sportBrands.length];
-        // Use mod to cycle through available images for that specific sub-category
         const imageId = i % cat.images.length;
         const image = cat.images[imageId];
 
@@ -105,14 +104,13 @@ const generateSmartProducts = (sportName, count) => {
         const priceSpread = (44000 / count) * i;
         const price = Math.floor(basePrice + priceSpread + (Math.random() * 500));
 
-        // Generate a fully unique image for every generated product
         const uniqueImage = `https://picsum.photos/seed/${sportName.replace(/\s/g, '')}${i}/400/400`;
 
         return {
             id: `${sportName.toLowerCase()}_${i}`,
             name: `${brand} ${cat.type} ${Math.floor(i / cats.length) + 1}`,
             price: `₹${price.toLocaleString('en-IN')}`,
-            priceValue: price, // For easier sorting
+            priceValue: price,
             image: uniqueImage,
             brand: brand
         };

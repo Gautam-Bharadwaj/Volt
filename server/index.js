@@ -4,7 +4,6 @@ const morgan = require('morgan');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User } = require('./db');
-
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -13,27 +12,23 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = 'volt_secret_key_123'; // In production, move to .env
+const JWT_SECRET = 'volt_secret_key_123';
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Static Database for sports & gear
 const { sports, sportProducts, sportPositions, positionGear } = require('./data/sportsData');
 
-// Ensure DB is in sync and optionally seed
 sequelize.sync().then(async () => {
     console.log('SQLite Database Connected & Synced.');
 }).catch(err => {
     console.error('Database connection failed:', err);
 });
 
-// Authentication Middleware
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) return res.status(401).json({ message: 'Access Denied: No Token Provided!' });
 
@@ -52,13 +47,10 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// --- ENDPOINTS ---
-
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Volt Server is running with SQLite & JWT!' });
 });
 
-// Auth
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -71,7 +63,6 @@ app.post('/api/auth/login', async (req, res) => {
 
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
-        // Exclude password from response
         const profile = user.toJSON();
         delete profile.password;
 
@@ -110,7 +101,6 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Users
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
@@ -163,7 +153,6 @@ app.post('/api/user/workout', authenticateToken, async (req, res) => {
         user.steps += addedSteps;
         user.xp += (addedScore * 10);
 
-        // Level up logic
         if (user.xp >= user.maxXp) {
             user.level += 1;
             user.xp -= user.maxXp;
@@ -185,7 +174,6 @@ app.post('/api/user/workout', authenticateToken, async (req, res) => {
     }
 });
 
-// Sports & Gear Data
 app.get('/api/sports', (req, res) => {
     res.status(200).json(sports);
 });
@@ -208,12 +196,10 @@ app.get('/api/gear/:position', (req, res) => {
     res.status(200).json(gear);
 });
 
-// Fetch all data for initial app load
 app.get('/api/data/all', (req, res) => {
     res.status(200).json({ sports, sportProducts, sportPositions, positionGear });
 });
 
-// Dynamic Arena Data (WebSockets)
 let tournaments = [
     { id: 1, name: 'Elite Champions League', prize: '₹2,50,000', players: '4.2k', tag: 'LIVE', viewers: 12800 },
     { id: 2, name: 'Volt Summer Splashdown', prize: '₹50,000', players: '1.8k', tag: 'LIVE', viewers: 5400 },
@@ -225,7 +211,6 @@ io.on('connection', (socket) => {
     socket.emit('arenaUpdate', tournaments);
 });
 
-// Simulate Live Audience Fluctuation
 setInterval(() => {
     tournaments[0].viewers += Math.floor(Math.random() * 21) - 5;
     tournaments[1].viewers += Math.floor(Math.random() * 11) - 2;
@@ -236,7 +221,6 @@ app.get('/api/arena/tournaments', (req, res) => {
     res.status(200).json(tournaments);
 });
 
-// Start Server
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Volt Backend Server running on http://0.0.0.0:${PORT} with WebSockets ⚡`);
 });

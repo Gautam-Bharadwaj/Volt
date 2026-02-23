@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     TextInput as RNTextInput,
     View,
@@ -9,9 +9,17 @@ import {
     Image,
     Alert,
     Dimensions,
-    Animated as RNAnimated
+    Animated as RNAnimated,
+    Platform
 } from 'react-native';
+
+const getApiUrl = () => {
+    if (Platform.OS === 'android') return 'http://10.0.2.2:5000';
+    return 'http://10.254.202.49:5000'; // LAN IP for physical device connection
+};
+const API_URL = getApiUrl();
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     Bell,
     Bookmark,
@@ -39,20 +47,38 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import {
-    sports,
-    sportProducts,
-    sportPositions,
-    positionGear
-} from './src/constants/sportsData';
+const DataContext = React.createContext(null);
 
 const { width } = Dimensions.get('window');
 
 export default function App() {
+    const [globalData, setGlobalData] = useState(null);
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/data/all`)
+            .then(res => res.json())
+            .then(data => setGlobalData(data))
+            .catch(err => {
+                console.error("Failed to load global data", err);
+                Alert.alert("Server Error", "Could not fetch inventory from backend.");
+            });
+    }, []);
+
+    if (!globalData) {
+        return (
+            <View style={{ flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center' }}>
+                <Activity size={40} color="#FF4500" style={{ marginBottom: 20 }} />
+                <Text style={{ color: '#FF4500', fontWeight: '900', letterSpacing: 2 }}>CONNECTING TO APERTURE SERVER...</Text>
+            </View>
+        );
+    }
+
     return (
-        <SafeAreaProvider>
-            <MainApp />
-        </SafeAreaProvider>
+        <DataContext.Provider value={globalData}>
+            <SafeAreaProvider>
+                <MainApp />
+            </SafeAreaProvider>
+        </DataContext.Provider>
     );
 }
 
@@ -61,6 +87,8 @@ export default function App() {
  * Supports dual UI modes: Explore (Beginner) and Pro Flow (Advanced).
  */
 const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
+    const { sports, sportProducts } = React.useContext(DataContext);
+
     const banners = [
         {
             tag: 'SEASON 2026',
@@ -122,7 +150,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
                                 <View>
                                     <Text style={styles.heroTag}>{banner.tag}</Text>
                                     <Text style={styles.heroTitle}>{banner.title}</Text>
-                                    <TouchableOpacity style={styles.heroBtn}>
+                                    <TouchableOpacity style={styles.heroBtn} onPress={() => Alert.alert('Offer', banner.title)}>
                                         <Text style={styles.heroBtnText}>{banner.btn}</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -159,7 +187,7 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
             <View style={styles.gridContainerB}>
                 {(sportProducts[selectedSport] || []).map((item, idx) => (
                     <Animated.View key={item.id} entering={FadeInUp.delay(idx * 50)} style={styles.miniCardB}>
-                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => Alert.alert('Product View', item.name)}>
                             <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
                             <View style={styles.miniBrandBadge}>
                                 <Text style={styles.miniBrandText}>{item.brand}</Text>
@@ -177,6 +205,8 @@ const BeginnerUI = ({ selectedSport, setSelectedSport }) => {
 };
 
 const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSelectedPosition }) => {
+    const { sports, sportPositions, positionGear } = React.useContext(DataContext);
+
     const getPositionStats = (pos) => {
         const statsMap = {
             'Striker': { agi: 85, pow: 92, sta: 78, vis: 75, focus: 'Explosive acceleration and precision finishing.' },
@@ -279,12 +309,14 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
             <View style={styles.gearGrid}>
                 {(positionGear[selectedPosition] || positionGear['Striker']).map((item, idx) => (
                     <Animated.View key={item.id} entering={SlideInRight.delay(idx * 150)} style={styles.productCard}>
-                        <View style={styles.imgWrapper}>
-                            <Image source={{ uri: item.image }} style={styles.productImg} />
-                            <View style={styles.tagBadge}>
-                                <Text style={styles.tagText}>{item.tag.toUpperCase()}</Text>
+                        <TouchableOpacity activeOpacity={0.9} onPress={() => Alert.alert('View Gear', item.name)}>
+                            <View style={styles.imgWrapper}>
+                                <Image source={{ uri: item.image }} style={styles.productImg} />
+                                <View style={styles.tagBadge}>
+                                    <Text style={styles.tagText}>{item.tag.toUpperCase()}</Text>
+                                </View>
                             </View>
-                        </View>
+                        </TouchableOpacity>
                         <View style={styles.proInfo}>
                             <Text style={styles.productNameP}>{item.name}</Text>
                             <Text style={styles.productPriceP}>{item.price}</Text>
@@ -296,47 +328,45 @@ const AdvancedUI = ({ selectedSport, setSelectedSport, selectedPosition, setSele
     );
 };
 
-const HomeUI = () => {
-    const [stats, setStats] = useState({
-        score: 84,
-        steps: 12400,
-        calories: 480
-    });
-    const [lastIntensity, setLastIntensity] = useState('+12%');
-    const [lastSessionTime, setLastSessionTime] = useState('2H AGO');
+const HomeUI = ({ stats, setStats }) => {
+    const [lastIntensity, setLastIntensity] = useState('--');
+    const [lastSessionTime, setLastSessionTime] = useState('--');
 
-    const logFeedback = (level) => {
-        let addedScore = 0;
-        let addedCalories = 0;
-        let addedSteps = 0;
-        let intensityText = '';
+    const logFeedback = async (level) => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const res = await fetch(`${API_URL}/api/user/workout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ level })
+            });
+            if (res.ok) {
+                const data = await res.json();
 
-        if (level === 'LIGHT') {
-            addedScore = 1;
-            addedCalories = 150;
-            addedSteps = 1500;
-            intensityText = '+2%';
-        } else if (level === 'MODERATE') {
-            addedScore = 3;
-            addedCalories = 350;
-            addedSteps = 4000;
-            intensityText = '+10%';
-        } else if (level === 'BEAST MODE') {
-            addedScore = 5;
-            addedCalories = 750;
-            addedSteps = 8000;
-            intensityText = '+24%';
+                // Update local stats from backend response
+                setStats(prev => ({
+                    ...prev,
+                    score: data.profile.fitnessScore,
+                    steps: data.profile.steps,
+                    calories: data.profile.calories,
+                    level: data.profile.level,
+                    xp: data.profile.xp,
+                    maxXp: data.profile.maxXp
+                }));
+
+                let intensityText = level === 'LIGHT' ? '+2%' : level === 'MODERATE' ? '+10%' : '+24%';
+                setLastIntensity(intensityText);
+                setLastSessionTime('JUST NOW');
+
+                Alert.alert('Session Logged! ⚡', `Feedback: ${level}\n+${data.added.calories} kcal\n+${data.added.score} Fitness Score`);
+            }
+        } catch (error) {
+            console.error("Failed to log workout: ", error);
+            Alert.alert("Network Error", "Could not connect to backend server.");
         }
-
-        setStats(prev => ({
-            score: Math.min(100, prev.score + addedScore),
-            steps: prev.steps + addedSteps,
-            calories: prev.calories + addedCalories
-        }));
-        setLastIntensity(intensityText);
-        setLastSessionTime('JUST NOW');
-
-        Alert.alert('Session Logged! ⚡', `Feedback: ${level}\n+${addedCalories} kcal\n+${addedScore} Fitness Score`);
     };
 
     return (
@@ -344,11 +374,11 @@ const HomeUI = () => {
             <View style={styles.homeTopRow}>
                 <View>
                     <Text style={styles.homeGreeting}>WELCOME BACK,</Text>
-                    <Text style={styles.homeUser}>GAUTAM BHARADWAJ</Text>
+                    <Text style={styles.homeUser}>{stats.name.toUpperCase()}</Text>
                 </View>
                 <View style={styles.streakBadge}>
                     <Flame size={18} color="#FF4500" fill="#FF4500" />
-                    <Text style={styles.streakText}>12 DAY STREAK</Text>
+                    <Text style={styles.streakText}>{stats.streak} DAY STREAK</Text>
                 </View>
             </View>
 
@@ -400,7 +430,7 @@ const HomeUI = () => {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.upgradeBanner}>
+            <TouchableOpacity style={styles.upgradeBanner} onPress={() => Alert.alert('Upgrade', 'Volt Pro Access unlocking soon!')}>
                 <LinearGradient colors={['#FF4500', '#FF8C00']} horizontal style={styles.upgradeGrad}>
                     <Shield size={24} color="white" />
                     <View style={styles.upgradeTextCont}>
@@ -414,166 +444,424 @@ const HomeUI = () => {
     );
 };
 
-const ArenaUI = () => (
-    <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-        <View style={styles.arenaHeader}>
-            <View>
-                <Text style={styles.arenaTag}>THE COLLISEUM</Text>
-                <Text style={styles.arenaTitle}>GLOBAL ARENA</Text>
-            </View>
-            <TouchableOpacity style={styles.leaderboardBtn}>
-                <Trophy size={18} color="#FFD700" />
-            </TouchableOpacity>
-        </View>
+const ArenaUI = () => {
+    const [activeArenaTab, setActiveArenaTab] = useState('ACTIVE');
+    const [tournaments, setTournaments] = useState([]);
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.arenaTabs}>
-            {['ACTIVE', 'UPCOMING', 'RESULTS', 'CLUBS'].map((tab, idx) => (
-                <TouchableOpacity key={tab} style={[styles.arenaTab, idx === 0 && styles.arenaTabActive]}>
-                    <Text style={[styles.arenaTabText, idx === 0 && styles.arenaTabTextActive]}>{tab}</Text>
+    useEffect(() => {
+        fetch(`${API_URL}/api/arena/tournaments`)
+            .then(res => res.json())
+            .then(data => setTournaments(data))
+            .catch(console.error);
+    }, []);
+
+    return (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
+            <View style={styles.arenaHeader}>
+                <View>
+                    <Text style={styles.arenaTag}>THE COLLISEUM</Text>
+                    <Text style={styles.arenaTitle}>GLOBAL ARENA</Text>
+                </View>
+                <TouchableOpacity style={styles.leaderboardBtn} onPress={() => Alert.alert('Leaderboard', 'Global rankings opening soon!')}>
+                    <Trophy size={18} color="#FFD700" />
                 </TouchableOpacity>
-            ))}
-        </ScrollView>
+            </View>
 
-        {[
-            { name: 'Elite Champions League', prize: '₹2,50,000', players: '4.2k', tag: 'LIVE', viewers: '12.8k' },
-            { name: 'Volt Summer Splashdown', prize: '₹50,000', players: '1.8k', tag: 'LIVE', viewers: '5.4k' },
-            { name: 'Warrior Street Series', prize: '₹80,000', players: '890', tag: 'STARTING', viewers: '0' }
-        ].map((item, i) => (
-            <View key={i} style={styles.tournCardEnhanced}>
-                <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.tournInnerEnhanced}>
-                    <View style={styles.tournTop}>
-                        <View style={styles.tournMetaRow}>
-                            <View style={styles.tournBadgeAbs}>
-                                <Text style={styles.tournBadgeText}>{item.tag}</Text>
-                            </View>
-                            {item.viewers !== '0' && (
-                                <View style={styles.viewerBadge}>
-                                    <View style={styles.liveDot} />
-                                    <Text style={styles.viewerText}>{item.viewers} WATCHING</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.arenaTabs}>
+                {['ACTIVE', 'UPCOMING', 'RESULTS', 'CLUBS'].map((tab, idx) => (
+                    <TouchableOpacity key={tab} style={[styles.arenaTab, activeArenaTab === tab && styles.arenaTabActive]} onPress={() => setActiveArenaTab(tab)}>
+                        <Text style={[styles.arenaTabText, activeArenaTab === tab && styles.arenaTabTextActive]}>{tab}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            {tournaments.length === 0 && (
+                <View style={{ marginTop: 40, alignItems: 'center' }}>
+                    <Activity size={24} color="#FF4500" />
+                    <Text style={{ color: '#666', marginTop: 15, fontWeight: '800' }}>LOADING ARENA EVENTS...</Text>
+                </View>
+            )}
+
+            {tournaments.map((item, i) => (
+                <View key={item.id || i} style={styles.tournCardEnhanced}>
+                    <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.tournInnerEnhanced}>
+                        <View style={styles.tournTop}>
+                            <View style={styles.tournMetaRow}>
+                                <View style={styles.tournBadgeAbs}>
+                                    <Text style={styles.tournBadgeText}>{item.tag}</Text>
                                 </View>
-                            )}
+                                {item.viewers !== '0' && (
+                                    <View style={styles.viewerBadge}>
+                                        <View style={styles.liveDot} />
+                                        <Text style={styles.viewerText}>{item.viewers} WATCHING</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <Text style={styles.tournNameEnhanced}>{item.name}</Text>
                         </View>
-                        <Text style={styles.tournNameEnhanced}>{item.name}</Text>
+                        <View style={styles.tournMid}>
+                            <View style={styles.tournStat}>
+                                <Text style={styles.tournStatLab}>PRIZE POOL</Text>
+                                <Text style={styles.tournStatValPrize}>{item.prize}</Text>
+                            </View>
+                            <View style={styles.tournStat}>
+                                <Text style={styles.tournStatLab}>ATHLETES</Text>
+                                <Text style={styles.tournStatVal}>{item.players}</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.arenaJoinBtn}
+                            onPress={() => Alert.alert('Arena Entry', `Joining ${item.name}...`)}
+                        >
+                            <LinearGradient
+                                colors={['#FF4500', '#FF2E00']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.arenaJoinGrad}
+                            >
+                                <Text style={styles.arenaJoinText}>ENTER ARENA</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                </View>
+            ))}
+        </Animated.View>
+    );
+};
+
+const ProfileUI = ({ stats, onLogout }) => {
+    const xpPercentage = Math.min(100, Math.max(0, (stats.xp / stats.maxXp) * 100));
+
+    return (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
+            <View style={styles.profileHeroEnhanced}>
+                <View style={styles.avatarWrapperAbs}>
+                    <LinearGradient colors={['#FF416C', '#FF4B2B']} style={styles.avatarRing}>
+                        <View style={styles.avatarInner}>
+                            <User size={50} color="white" />
+                        </View>
+                    </LinearGradient>
+                    <View style={styles.verifiedBadge}>
+                        <Zap size={10} color="black" fill="black" />
                     </View>
-                    <View style={styles.tournMid}>
-                        <View style={styles.tournStat}>
-                            <Text style={styles.tournStatLab}>PRIZE POOL</Text>
-                            <Text style={styles.tournStatValPrize}>{item.prize}</Text>
-                        </View>
-                        <View style={styles.tournStat}>
-                            <Text style={styles.tournStatLab}>ATHLETES</Text>
-                            <Text style={styles.tournStatVal}>{item.players}</Text>
-                        </View>
+                </View>
+                <Text style={styles.pName}>{stats.name}</Text>
+                <View style={styles.lvlBadge}>
+                    <Star size={12} color="#FFD700" fill="#FFD700" />
+                    <Text style={styles.lvlText}>GOLD ATHLETE • LEVEL {stats.level}</Text>
+                </View>
+
+                <View style={styles.progressSection}>
+                    <View style={styles.progressTextRow}>
+                        <Text style={styles.progressLabel}>NEXT RANK: MASTER</Text>
+                        <Text style={styles.progressPercent}>{stats.xp}/{stats.maxXp} XP</Text>
                     </View>
-                    <TouchableOpacity
-                        style={styles.arenaJoinBtn}
-                        onPress={() => Alert.alert('Arena Entry', `Joining ${item.name}...`)}
-                    >
+                    <View style={styles.progressBarBg}>
                         <LinearGradient
-                            colors={['#FF4500', '#FF2E00']}
+                            colors={['#FF4500', '#FF8C00']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
-                            style={styles.arenaJoinGrad}
-                        >
-                            <Text style={styles.arenaJoinText}>ENTER ARENA</Text>
-                        </LinearGradient>
+                            style={[styles.progressBarFill, { width: `${xpPercentage}%` }]}
+                        />
+                    </View>
+                </View>
+            </View>
+
+            <Text style={styles.sectionTitle}>PRESTIGE AWARDS</Text>
+            <View style={styles.achievementRow}>
+                {[
+                    { icon: <Zap size={20} color="#FFD700" />, label: 'Fastest' },
+                    { icon: <Shield size={20} color="#4169E1" />, label: 'Defender' },
+                    { icon: <Award size={20} color="#FF4500" />, label: 'Champion' }
+                ].map((item, i) => (
+                    <View key={i} style={styles.attainBox}>
+                        <View style={styles.attainIconCirc}>{item.icon}</View>
+                        <Text style={styles.attainLabel}>{item.label.toUpperCase()}</Text>
+                    </View>
+                ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>RECENT ACTIVITY</Text>
+            <View style={styles.activityTimeline}>
+                {[
+                    { title: 'Purchased Elite Cleats', date: 'Yesterday', icon: <ShoppingBag size={14} color="#FF4500" /> },
+                    { title: 'New Personal Record', date: '2 days ago', icon: <Activity size={14} color="#00FF7F" /> },
+                    { title: 'Joined Summer Cup', date: '3 days ago', icon: <Trophy size={14} color="#FFD700" /> }
+                ].map((item, i) => (
+                    <View key={i} style={styles.timelineItem}>
+                        <View style={styles.timelineIcon}>{item.icon}</View>
+                        <View style={styles.timelineContent}>
+                            <Text style={styles.timelineTitle}>{item.title}</Text>
+                            <Text style={styles.timelineDate}>{item.date}</Text>
+                        </View>
+                    </View>
+                ))}
+            </View>
+
+            <View style={styles.profileMenu}>
+                {[
+                    { label: 'MY GEAR COLLECTION', icon: <ShoppingBag size={18} color="#666" /> },
+                    { label: 'PERFORMANCE ARCHIVE', icon: <Activity size={18} color="#666" /> },
+                    { label: 'TEAM MANAGER', icon: <Grid size={18} color="#666" /> },
+                    { label: 'APP SETTINGS', icon: <Star size={18} color="#666" /> }
+                ].map((item, i) => (
+                    <TouchableOpacity key={i} style={styles.menuRow} onPress={() => Alert.alert(item.label, 'Opening ' + item.label + '...')}>
+                        <View style={styles.menuIconBox}>{item.icon}</View>
+                        <Text style={styles.menuRowText}>{item.label}</Text>
+                        <Zap size={14} color="#333" />
                     </TouchableOpacity>
-                </LinearGradient>
-            </View>
-        ))}
-    </Animated.View>
-);
+                ))}
 
-const ProfileUI = () => (
-    <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
-        <View style={styles.profileHeroEnhanced}>
-            <View style={styles.avatarWrapperAbs}>
-                <LinearGradient colors={['#FF416C', '#FF4B2B']} style={styles.avatarRing}>
-                    <View style={styles.avatarInner}>
-                        <User size={50} color="white" />
+                <TouchableOpacity style={[styles.menuRow, { borderColor: '#FF450040', marginTop: 20 }]} onPress={onLogout}>
+                    <View style={[styles.menuIconBox, { backgroundColor: '#FF450015' }]}>
+                        <User size={18} color="#FF4500" />
                     </View>
-                </LinearGradient>
-                <View style={styles.verifiedBadge}>
-                    <Zap size={10} color="black" fill="black" />
-                </View>
-            </View>
-            <Text style={styles.pName}>Gautam Bharadwaj</Text>
-            <View style={styles.lvlBadge}>
-                <Star size={12} color="#FFD700" fill="#FFD700" />
-                <Text style={styles.lvlText}>GOLD ATHLETE • LEVEL 42</Text>
-            </View>
-
-            <View style={styles.progressSection}>
-                <View style={styles.progressTextRow}>
-                    <Text style={styles.progressLabel}>NEXT RANK: MASTER</Text>
-                    <Text style={styles.progressPercent}>840/1000 XP</Text>
-                </View>
-                <View style={styles.progressBarBg}>
-                    <LinearGradient
-                        colors={['#FF4500', '#FF8C00']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.progressBarFill, { width: '84%' }]}
-                    />
-                </View>
-            </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>PRESTIGE AWARDS</Text>
-        <View style={styles.achievementRow}>
-            {[
-                { icon: <Zap size={20} color="#FFD700" />, label: 'Fastest' },
-                { icon: <Shield size={20} color="#4169E1" />, label: 'Defender' },
-                { icon: <Award size={20} color="#FF4500" />, label: 'Champion' }
-            ].map((item, i) => (
-                <View key={i} style={styles.attainBox}>
-                    <View style={styles.attainIconCirc}>{item.icon}</View>
-                    <Text style={styles.attainLabel}>{item.label.toUpperCase()}</Text>
-                </View>
-            ))}
-        </View>
-
-        <Text style={styles.sectionTitle}>RECENT ACTIVITY</Text>
-        <View style={styles.activityTimeline}>
-            {[
-                { title: 'Purchased Elite Cleats', date: 'Yesterday', icon: <ShoppingBag size={14} color="#FF4500" /> },
-                { title: 'New Personal Record', date: '2 days ago', icon: <Activity size={14} color="#00FF7F" /> },
-                { title: 'Joined Summer Cup', date: '3 days ago', icon: <Trophy size={14} color="#FFD700" /> }
-            ].map((item, i) => (
-                <View key={i} style={styles.timelineItem}>
-                    <View style={styles.timelineIcon}>{item.icon}</View>
-                    <View style={styles.timelineContent}>
-                        <Text style={styles.timelineTitle}>{item.title}</Text>
-                        <Text style={styles.timelineDate}>{item.date}</Text>
-                    </View>
-                </View>
-            ))}
-        </View>
-
-        <View style={styles.profileMenu}>
-            {[
-                { label: 'MY GEAR COLLECTION', icon: <ShoppingBag size={18} color="#666" /> },
-                { label: 'PERFORMANCE ARCHIVE', icon: <Activity size={18} color="#666" /> },
-                { label: 'TEAM MANAGER', icon: <Grid size={18} color="#666" /> },
-                { label: 'APP SETTINGS', icon: <Star size={18} color="#666" /> }
-            ].map((item, i) => (
-                <TouchableOpacity key={i} style={styles.menuRow}>
-                    <View style={styles.menuIconBox}>{item.icon}</View>
-                    <Text style={styles.menuRowText}>{item.label}</Text>
-                    <Zap size={14} color="#333" />
+                    <Text style={[styles.menuRowText, { color: '#FF4500' }]}>LOGOUT</Text>
                 </TouchableOpacity>
-            ))}
-        </View>
-    </Animated.View>
-);
+            </View>
+        </Animated.View>
+    );
+};
+
+const AuthUI = ({ onLogin }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleAuth = async () => {
+        if (!email.trim() || !password.trim() || (!isLogin && !name.trim())) {
+            Alert.alert("Error", "Please fill in all fields.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+            const body = isLogin ? { email, password } : { name, email, password };
+
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                await AsyncStorage.setItem('userToken', data.token);
+                onLogin(data.profile);
+            } else {
+                Alert.alert("Authentication Failed", data.message || "Something went wrong.");
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Network Error", "Could not connect to the server.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Animated.View entering={FadeIn.duration(800)} style={styles.authContainer}>
+            <View style={styles.authHeaderBox}>
+                <Image source={require('./assets/vlogo.webp')} style={styles.authLogoImg} resizeMode="contain" />
+                <Text style={styles.authSubtitle}>THE SPORT UNIVERSE AWAITS</Text>
+            </View>
+
+            <Animated.View entering={FadeInUp.delay(300).duration(600)} style={styles.authFormBox}>
+                <Text style={styles.authTabTitle}>{isLogin ? 'LOGIN TO YOUR ACCOUNT' : 'CREATE NEW ATHLETE PROFILE'}</Text>
+
+                {!isLogin && (
+                    <RNTextInput
+                        style={styles.authInputLine}
+                        placeholder="Full Name (e.g., Gautam)"
+                        placeholderTextColor="#666"
+                        autoCapitalize="words"
+                        value={name}
+                        onChangeText={setName}
+                    />
+                )}
+
+                <RNTextInput
+                    style={styles.authInputLine}
+                    placeholder="Email Address"
+                    placeholderTextColor="#666"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                />
+                <RNTextInput
+                    style={styles.authInputLine}
+                    placeholder="Secure Password"
+                    placeholderTextColor="#666"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
+
+                <TouchableOpacity style={[styles.authSubmitBtnWrap, isLoading && { opacity: 0.5 }]} onPress={handleAuth} disabled={isLoading}>
+                    <LinearGradient colors={['#FF4500', '#FF2E00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.authSubmitGradBar}>
+                        <Text style={styles.authSubmitTextStr}>{isLoading ? 'LOADING...' : (isLogin ? 'ENTER ARENA' : 'JOIN THE ELITE')}</Text>
+                        <Zap size={16} color="white" style={{ marginLeft: 8 }} />
+                    </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.authToggleClick}>
+                    <Text style={styles.authToggleLabel}>
+                        {isLogin ? "DON'T HAVE AN ACCOUNT? SIGN UP" : "ALREADY AN ATHLETE? LOG IN"}
+                    </Text>
+                </TouchableOpacity>
+            </Animated.View>
+        </Animated.View>
+    );
+};
+
+const SearchResultsUI = ({ query }) => {
+    const { sportProducts, positionGear } = React.useContext(DataContext);
+
+    const allProducts = useMemo(() => {
+        let products = [];
+        Object.values(sportProducts).forEach(arr => {
+            products = [...products, ...arr];
+        });
+        Object.values(positionGear).forEach(arr => {
+            products = [...products, ...arr];
+        });
+
+        // Remove duplicates based on ID
+        const uniqueProducts = Array.from(new Map(products.map(p => [p.id, p])).values());
+        return uniqueProducts;
+    }, []);
+
+    const filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        (p.brand && p.brand.toLowerCase().includes(query.toLowerCase())) ||
+        (p.tag && p.tag.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    return (
+        <Animated.View entering={FadeIn.duration(400)} style={styles.mainContent}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <Text style={styles.sectionTitle}>SEARCH RESULTS: {filtered.length}</Text>
+            </View>
+
+            <View style={styles.gridContainerB}>
+                {filtered.map((item, idx) => (
+                    <Animated.View key={item.id} entering={FadeInUp.delay((idx % 10) * 50)} style={styles.miniCardB}>
+                        <TouchableOpacity activeOpacity={0.95} style={styles.miniImageWrapperB} onPress={() => Alert.alert('Product View', item.name)}>
+                            <Image source={{ uri: item.image }} style={styles.miniImageB} resizeMethod="scale" />
+                            {item.brand && (
+                                <View style={styles.miniBrandBadge}>
+                                    <Text style={styles.miniBrandText}>{item.brand}</Text>
+                                </View>
+                            )}
+                            {item.tag && (
+                                <View style={styles.tagBadge}>
+                                    <Text style={styles.tagText}>{item.tag.toUpperCase()}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                        <View style={styles.miniInfoB}>
+                            <Text numberOfLines={1} style={styles.miniNameB}>{item.name}</Text>
+                            <Text style={styles.miniPriceB}>{item.price}</Text>
+                        </View>
+                    </Animated.View>
+                ))}
+                {filtered.length === 0 && (
+                    <View style={{ flex: 1, alignItems: 'center', marginTop: 50, width: '100%' }}>
+                        <Search size={40} color="#333" />
+                        <Text style={{ color: '#666', marginTop: 15, fontWeight: '800' }}>NO PRODUCTS FOUND</Text>
+                    </View>
+                )}
+            </View>
+        </Animated.View>
+    );
+};
 
 function MainApp() {
 
-    const [activeTab, setActiveTab] = useState('Shop');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [activeTab, setActiveTab] = useState('Home');
     const [activeMode, setActiveMode] = useState('Beginner');
     const [selectedSport, setSelectedSport] = useState('Football');
     const [selectedPosition, setSelectedPosition] = useState('Striker');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const [stats, setStats] = useState({
+        score: 0,
+        steps: 0,
+        calories: 0,
+        streak: 0,
+        name: 'LOADING...',
+        level: 1,
+        xp: 0,
+        maxXp: 1000
+    });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                if (!token) return;
+
+                const response = await fetch(`${API_URL}/api/user/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats({
+                        score: data.fitnessScore,
+                        steps: data.steps,
+                        calories: data.calories,
+                        streak: data.streak,
+                        name: data.name,
+                        level: data.level,
+                        xp: data.xp,
+                        maxXp: data.maxXp
+                    });
+                    setIsAuthenticated(true);
+                }
+            } catch (error) {
+                console.error("Failed to fetch profile: ", error);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleLoginSuccess = (profile) => {
+        setStats({
+            score: profile.fitnessScore,
+            steps: profile.steps,
+            calories: profile.calories,
+            streak: profile.streak,
+            name: profile.name,
+            level: profile.level,
+            xp: profile.xp,
+            maxXp: profile.maxXp
+        });
+        setIsAuthenticated(true);
+    };
+
+    const handleLogout = async () => {
+        await AsyncStorage.removeItem('userToken');
+        setIsAuthenticated(false);
+        setActiveTab('Home');
+        setStats({
+            score: 0, steps: 0, calories: 0, streak: 0, name: 'LOADING...', level: 1, xp: 0, maxXp: 1000
+        });
+    };
+
+    if (!isAuthenticated) {
+        return (
+            <View style={styles.container}>
+                <StatusBar style="light" />
+                <AuthUI onLogin={handleLoginSuccess} />
+            </View>
+        );
+    }
 
 
 
@@ -612,7 +900,7 @@ function MainApp() {
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
-                        <TouchableOpacity style={styles.filterBtn}>
+                        <TouchableOpacity style={styles.filterBtn} onPress={() => Alert.alert('Filter', 'Filter options opening soon!')}>
                             <Grid size={18} color="#FF4500" />
                         </TouchableOpacity>
                     </View>
@@ -644,19 +932,25 @@ function MainApp() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
-                {activeTab === 'Home' && <HomeUI />}
-                {activeTab === 'Shop' && (
-                    activeMode === 'Beginner' ?
-                        <BeginnerUI selectedSport={selectedSport} setSelectedSport={setSelectedSport} /> :
-                        <AdvancedUI
-                            selectedSport={selectedSport}
-                            setSelectedSport={setSelectedSport}
-                            selectedPosition={selectedPosition}
-                            setSelectedPosition={setSelectedPosition}
-                        />
+                {searchQuery.trim().length > 0 ? (
+                    <SearchResultsUI query={searchQuery} />
+                ) : (
+                    <>
+                        {activeTab === 'Home' && <HomeUI stats={stats} setStats={setStats} />}
+                        {activeTab === 'Shop' && (
+                            activeMode === 'Beginner' ?
+                                <BeginnerUI selectedSport={selectedSport} setSelectedSport={setSelectedSport} /> :
+                                <AdvancedUI
+                                    selectedSport={selectedSport}
+                                    setSelectedSport={setSelectedSport}
+                                    selectedPosition={selectedPosition}
+                                    setSelectedPosition={setSelectedPosition}
+                                />
+                        )}
+                        {activeTab === 'Arena' && <ArenaUI />}
+                        {activeTab === 'Profile' && <ProfileUI stats={stats} onLogout={handleLogout} />}
+                    </>
                 )}
-                {activeTab === 'Arena' && <ArenaUI />}
-                {activeTab === 'Profile' && <ProfileUI />}
             </ScrollView>
 
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)', 'black']} style={styles.bottomNavContainer}>
@@ -697,7 +991,7 @@ const styles = StyleSheet.create({
     modeContainer: { alignItems: 'center', marginTop: 12 },
     modeTrack: { flexDirection: 'row', backgroundColor: '#111', borderRadius: 30, padding: 4, width: '85%' },
     modeTab: { flex: 1, paddingVertical: 12, borderRadius: 26, alignItems: 'center' },
-    modeTabActive: { backgroundColor: '#222' },
+    modeTabActive: { backgroundColor: '#4169E1' },
     modeTabActivePro: { backgroundColor: '#FF4500' },
     modeTabText: { color: '#666', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
     modeTabTextActive: { color: 'white' },
@@ -877,5 +1171,18 @@ const styles = StyleSheet.create({
     profileMenu: { marginTop: 10 },
     menuRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', padding: 20, borderRadius: 25, marginBottom: 15, borderWidth: 1, borderColor: '#1a1a1a' },
     menuIconBox: { width: 40, height: 40, borderRadius: 15, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    menuRowText: { flex: 1, color: 'white', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }
+    menuRowText: { flex: 1, color: 'white', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+
+    authContainer: { flex: 1, backgroundColor: 'black', justifyContent: 'center', padding: 24 },
+    authHeaderBox: { alignItems: 'center', marginBottom: 60, marginTop: -40 },
+    authLogoImg: { width: 300, height: 100 },
+    authSubtitle: { color: '#FF4500', fontSize: 10, fontWeight: '900', letterSpacing: 4, marginTop: -20 },
+    authFormBox: { backgroundColor: '#111', padding: 30, borderRadius: 30, borderWidth: 1, borderColor: '#222' },
+    authTabTitle: { color: 'white', fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginBottom: 30, textAlign: 'center' },
+    authInputLine: { backgroundColor: '#1a1a1a', color: 'white', fontSize: 14, fontWeight: '700', padding: 18, borderRadius: 15, marginBottom: 20, borderWidth: 1, borderColor: '#333' },
+    authSubmitBtnWrap: { marginTop: 10, borderRadius: 20, overflow: 'hidden' },
+    authSubmitGradBar: { flexDirection: 'row', paddingVertical: 18, justifyContent: 'center', alignItems: 'center' },
+    authSubmitTextStr: { color: 'white', fontSize: 14, fontWeight: '900', letterSpacing: 2 },
+    authToggleClick: { marginTop: 25, alignItems: 'center' },
+    authToggleLabel: { color: '#888', fontSize: 9, fontWeight: '900', letterSpacing: 1 }
 });

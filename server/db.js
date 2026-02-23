@@ -18,7 +18,8 @@ const User = sequelize.define('User', {
     fitnessScore: { type: DataTypes.INTEGER, defaultValue: 0 },
     calories: { type: DataTypes.INTEGER, defaultValue: 0 },
     streak: { type: DataTypes.INTEGER, defaultValue: 0 },
-    steps: { type: DataTypes.INTEGER, defaultValue: 0 }
+    steps: { type: DataTypes.INTEGER, defaultValue: 0 },
+    lastLogin: { type: DataTypes.DATE, allowNull: true }
 });
 
 module.exports = { sequelize, User };

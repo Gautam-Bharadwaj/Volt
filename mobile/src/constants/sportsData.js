@@ -97,11 +97,9 @@ const generateSmartProducts = (sportName, count) => {
     return Array.from({ length: count }, (_, i) => {
         const cat = cats[i % cats.length];
         const brand = sportBrands[i % sportBrands.length];
-        // Use mod to cycle through available images for that specific sub-category
         const imageId = i % cat.images.length;
         const image = cat.images[imageId];
 
-        // Ensure price ranges properly from 1000 to 45000 based on index i to give a spread
         const basePrice = 1000;
         const priceSpread = (44000 / count) * i;
         const price = Math.floor(basePrice + priceSpread + (Math.random() * 500));

@@ -38,7 +38,10 @@ import {
     Flame,
     Star,
     Shield,
-    TrendingUp
+    TrendingUp,
+    Plus,
+    X,
+    Dumbbell
 } from 'lucide-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -793,6 +796,18 @@ const SearchResultsUI = ({ query }) => {
     );
 };
 
+const TrainingUI = () => {
+    return (
+        <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>
+            <View style={{ flex: 1, alignItems: 'center', marginTop: 100 }}>
+                <Dumbbell size={60} color="#FF4500" />
+                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', marginTop: 20 }}>TRAINING HUB</Text>
+                <Text style={{ color: '#666', fontSize: 13, fontWeight: '800', marginTop: 10 }}>Personalized Programs Arriving Soon!</Text>
+            </View>
+        </Animated.View>
+    );
+};
+
 function MainApp() {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -960,6 +975,7 @@ function MainApp() {
                                 />
                         )}
                         {activeTab === 'Arena' && <ArenaUI />}
+                        {activeTab === 'Training' && <TrainingUI />}
                         {activeTab === 'Profile' && <ProfileUI stats={stats} onLogout={handleLogout} />}
                     </>
                 )}

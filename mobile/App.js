@@ -918,6 +918,7 @@ const TrainingUI = ({ streak }) => {
     const [activeDrill, setActiveDrill] = useState(null);
     const [timerState, setTimerState] = useState('IDLE'); // IDLE, RUNNING, PAUSED
     const [elapsed, setElapsed] = useState(0);
+    const [showCalendar, setShowCalendar] = useState(false);
 
     const zones = ['FULL BODY', 'CORE', 'UPPER', 'LOWER', 'HIIT'];
 
@@ -1042,7 +1043,7 @@ const TrainingUI = ({ streak }) => {
         );
     }
 
-    const [showCalendar, setShowCalendar] = useState(false);
+
 
     if (showCalendar) {
         return (

@@ -697,6 +697,9 @@ const ArenaUI = () => {
     );
 };
 
+/**
+ * ProfileUI: Restored with original feature set
+ */
 const ProfileUI = ({ stats, handleLogout }) => {
     return (
         <Animated.View entering={FadeIn.duration(600)} style={styles.mainContent}>

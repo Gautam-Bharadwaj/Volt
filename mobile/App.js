@@ -19,7 +19,7 @@ import { io } from 'socket.io-client';
 
 const getApiUrl = () => {
     if (Platform.OS === 'android') return 'http://10.0.2.2:5000';
-    return 'http://10.254.202.49:5000';
+    return 'http://10.215.153.120:5000';
 };
 const API_URL = getApiUrl();
 import {
